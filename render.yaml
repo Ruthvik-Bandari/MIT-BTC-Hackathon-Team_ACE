@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: satsguard-api
+    runtime: docker
+    dockerfilePath: ./apps/guardian-api/Dockerfile
+    dockerContext: ./apps/guardian-api
+    plan: free
+    region: oregon
+    branch: main
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: ALBY_NWC_URL
+        sync: false
+      - key: COGCOIN_API_KEY
+        sync: false
+      - key: BITCOIN_NETWORK
+        value: signet
+      - key: MEMPOOL_API_URL
+        value: https://mempool.space/signet/api
+      - key: CORS_ORIGIN
+        value: https://satsguard.vercel.app
