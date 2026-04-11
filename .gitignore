@@ -48,6 +48,9 @@ coverage/
 # Claude Code memory (local only)
 memory/
 
+# Local dev tools
+tools/
+
 # Legacy files (moved to proper locations)
 ci.yml
 env.example
