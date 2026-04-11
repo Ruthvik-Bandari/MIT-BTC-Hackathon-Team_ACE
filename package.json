@@ -6,9 +6,9 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "bun --filter '*' dev",
-    "build": "bun --filter '*' build",
-    "typecheck": "bun --filter '*' typecheck",
+    "dev": "bun run --filter '*' dev",
+    "build": "bun run --filter '*' build",
+    "typecheck": "bun run --filter '*' typecheck",
     "lint": "bunx oxlint ."
   }
 }
