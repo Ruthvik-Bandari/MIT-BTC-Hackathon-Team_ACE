@@ -7,17 +7,25 @@ import { cogcoinRouter } from "./routes/cogcoin.js";
 import { scannerRouter } from "./routes/scanner.js";
 import { initCogcoin, getRegisteredIdentity } from "./services/cogcoin.js";
 import { initMonitor } from "./services/monitor.js";
+import {
+  rateLimiter,
+  securityHeaders,
+  errorHandler,
+} from "./middleware/security.js";
 
 const app = express();
 const PORT = parseInt(process.env["PORT"] ?? "3001", 10);
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
 
+app.use(securityHeaders);
+
 app.use(cors({
   origin: process.env["CORS_ORIGIN"] ?? "http://localhost:3000",
   credentials: true,
 }));
 
+app.use(rateLimiter);
 app.use(express.json({ limit: "1mb" }));
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
@@ -53,6 +61,10 @@ app.get("/api/health", (_req, res) => {
 app.post("/api/wallet/create", (_req, res) => {
   res.status(501).json({ error: "Not implemented yet — Om's task" });
 });
+
+// ─── Error Handler (must be after all routes) ──────────────────────────────
+
+app.use(errorHandler);
 
 // ─── HTTP Server + WebSocket ────────────────────────────────────────────────
 
