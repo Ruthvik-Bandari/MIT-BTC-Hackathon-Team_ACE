@@ -1,208 +1,207 @@
-# SatsGuard — Security Architecture
+# SatsGuard — Architecture
+
+## System overview
+
+```
+                    ┌─────────────────────┐
+                    │       User          │
+                    │  "Send 5000 sats    │
+                    │   to tb1q..."       │
+                    └──────────┬──────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │    Next.js 15       │
+                    │    Dashboard        │
+                    │  (Vercel Free)      │
+                    │                     │
+                    │  - Guardian Chat    │
+                    │  - Wallet Overview  │
+                    │  - Quantum Scanner  │
+                    │  - Lightning Demo   │
+                    └──────────┬──────────┘
+                               │
+                         REST + WebSocket
+                               │
+                    ┌──────────▼──────────┐
+                    │   Guardian API      │
+                    │   (Railway Free)    │
+                    │                     │
+                    │   Express + Bun     │
+                    │   Port 3001         │
+                    └──────────┬──────────┘
+                               │
+            ┌──────────────────┼──────────────────┐
+            │                  │                   │
+   ┌────────▼───────┐ ┌───────▼────────┐ ┌───────▼────────┐
+   │  Claude AI     │ │  Nunchuk CLI   │ │  Quantum       │
+   │  Guardian      │ │  Wallet Ops    │ │  Scanner       │
+   │                │ │                │ │                │
+   │  Intent parse  │ │  Group wallet  │ │  Address type  │
+   │  Risk explain  │ │  Policy mgmt   │ │  Risk assess   │
+   │  NL responses  │ │  Tx approval   │ │  Batch scan    │
+   └────────────────┘ └────────────────┘ └────────────────┘
+            │                  │                   │
+   ┌────────▼───────┐ ┌───────▼────────┐ ┌───────▼────────┐
+   │  Anthropic API │ │  Bitcoin       │ │  mempool.space │
+   │  (Claude)      │ │  Signet        │ │  Signet API    │
+   └────────────────┘ └────────────────┘ └────────────────┘
+            │
+   ┌────────▼───────┐ ┌────────────────┐
+   │  Lightning     │ │  Cogcoin       │
+   │  (Alby NWC)   │ │  (OP_RETURN)   │
+   └────────────────┘ └────────────────┘
+```
+
+## Data flow
+
+### Guardian chat flow
+```
+User input → Dashboard → POST /api/guardian/parse
+  → Claude AI parses intent
+  → Returns structured action (send, set-policy, scan, query)
+  → Dashboard executes action via appropriate API
+  → WebSocket pushes status updates back
+```
+
+### Transaction flow (with policy enforcement)
+```
+User: "Send 10000 sats to tb1q..."
+  → Claude parses: {action: "send", amount: 10000, address: "tb1q..."}
+  → Check quantum risk on destination address
+  → Check spending policy (daily limit)
+  → If within limit → auto-approve via Nunchuk
+  → If over limit → queue for human approval
+  → WebSocket: transaction:pending / transaction:approved
+```
+
+### Quantum scan flow
+```
+Address input → detectAddressType() → assessQuantumRisk()
+  │
+  ├─ P2PK (raw pubkey)         → CRITICAL (always exposed)
+  ├─ P2PKH + spent             → HIGH (pubkey in scriptSig)
+  ├─ P2WPKH + spent            → HIGH (pubkey in witness)
+  ├─ P2TR (taproot)            → MEDIUM (tweaked key visible)
+  ├─ Unspent hash-protected    → LOW (key hidden behind hash)
+  └─ P2SH / P2WSH             → VARIABLE (depends on script)
+```
+
+---
+
+## Security Architecture
 
 **Author**: Vamsi Yanamadala (Security Lead, Team ACE)
-**Last Updated**: April 11, 2026
 
----
+### Threat Model
 
-## 1. Threat Model
+SatsGuard faces three threat categories:
 
-SatsGuard faces three categories of threats:
+1. **Quantum Computing**: Shor's algorithm derives private keys from exposed public keys. Google whitepaper: <500K qubits breaks secp256k1 in ~9 minutes. 6.9M BTC exposed.
+2. **API Attacks**: Input injection, DoS, CORS bypass, information leakage.
+3. **Wallet Threats**: Unauthorized AI agent transactions, key exposure.
 
-### Quantum Computing Threats
-- **Shor's algorithm** can derive private keys from exposed public keys
-- Google Quantum AI whitepaper (March 30, 2026): <500K qubits breaks secp256k1 in ~9 minutes
-- 6.9 million BTC have exposed public keys on-chain today
-- 1.7 million BTC locked in P2PK outputs (Satoshi era, always exposed)
-
-### API Security Threats
-- Input injection via malformed addresses or request bodies
-- Denial of service via high-volume requests
-- Cross-origin attacks from unauthorized frontends
-- Information leakage through verbose error messages
-
-### Wallet Security Threats
-- Unauthorized AI agent transactions exceeding policy limits
-- Private key exposure through API responses
-- Man-in-the-middle attacks on transaction signing
-
----
-
-## 2. Security Architecture Diagram
+### Defense Layers
 
 ```
-                          ┌─────────────────┐
-                          │   Frontend       │
-                          │   (Vercel)       │
-                          │   HTTPS only     │
-                          └────────┬────────┘
-                                   │ xior (CORS restricted)
-                          ┌────────▼────────┐
-                          │  Security Layer  │
-                          │  ┌────────────┐  │
-                          │  │ CORS       │  │  ← Origin whitelist
-                          │  │ Rate Limit │  │  ← 60 req/min/IP
-                          │  │ Body Guard │  │  ← 256KB max
-                          │  │ Headers    │  │  ← HSTS, CSP, X-Frame
-                          │  │ Zod Valid  │  │  ← Schema validation
-                          │  └────────────┘  │
-                          └────────┬────────┘
-                                   │
-               ┌───────────────────┼───────────────────┐
-               │                   │                   │
-      ┌────────▼──────┐  ┌────────▼──────┐  ┌────────▼──────┐
-      │ Guardian AI   │  │ Quantum       │  │ Wallet        │
-      │ (Claude)      │  │ Scanner       │  │ (Nunchuk)     │
-      │               │  │               │  │               │
-      │ Intent parse  │  │ Address type  │  │ Group wallet  │
-      │ Risk warnings │  │ Risk assess   │  │ Policy limits │
-      │ Streaming     │  │ Mempool API   │  │ Co-signing    │
-      └───────────────┘  │ Timeline      │  └───────────────┘
-                         │ Migration     │
-                         │ BIP-360       │
-                         │ UTXO Monitor  │
-                         └───────────────┘
+                    ┌────────────────────┐
+                    │  Security Layer    │
+                    │  ┌──────────────┐  │
+                    │  │ Sec Headers  │  │  ← HSTS, CSP, X-Frame
+                    │  │ CORS         │  │  ← Origin whitelist
+                    │  │ Rate Limit   │  │  ← 60 req/min/IP
+                    │  │ Body Guard   │  │  ← 256KB max
+                    │  │ Zod Valid    │  │  ← Schema validation
+                    │  │ Error Typed  │  │  ← No stack traces leaked
+                    │  └──────────────┘  │
+                    └────────────────────┘
 ```
 
----
-
-## 3. Security Controls Implemented
-
-### 3.1 Input Validation (Zod)
-
-Every API endpoint validates request data using Zod schemas before processing:
-
-| Endpoint | Schema | Validates |
+| Control | Implementation | Details |
 |---|---|---|
-| POST /api/scanner/analyze | `analyzeRequestSchema` | Array of 1-100 addresses, each with valid Bitcoin prefix and boolean spent flag |
-| GET /api/scanner/address/:addr | `addressParamsSchema` | Address string 20-90 chars |
-| GET /api/scanner/address/:addr?spent= | `addressQuerySchema` | Enum "true"/"false", defaults to "false" |
-| POST /api/scanner/monitor/watch | `watchRequestSchema` | Valid Bitcoin address prefix |
-| GET /api/scanner/timeline/year/:year | `yearParamsSchema` | Integer 2024-2040 |
+| Security Headers | `middleware/security.ts` | HSTS, CSP, X-Frame-Options: DENY, nosniff, X-Powered-By removed |
+| CORS | `middleware/security.ts` | Origin whitelist from FRONTEND_URL env + localhost |
+| Rate Limiting | `middleware/security.ts` | In-memory, 60 req/min/IP, X-RateLimit headers, auto-cleanup |
+| Body Size Guard | `middleware/security.ts` | 256KB max, 413 response if exceeded |
+| Input Validation | `schemas/scanner.schema.ts` | Zod on all endpoints: address format, prefix, length, type |
+| Error Handling | `middleware/security.ts` | Typed error classes (ValidationError, ScanError, RateLimitError). No internals leaked. |
+| DAL Pattern | Frontend architecture | Components never call API directly |
 
-Bitcoin address prefix validation accepts: `tb1`, `bc1`, `bcrt1` (bech32), `1`, `3`, `m`, `n`, `2` (base58).
+### Wallet Security (Nunchuk model)
+```
+Group Wallet (2-of-3 multisig)
+  ├── User Key      — Full control, human-held
+  ├── Agent Key     — AI agent, bounded authority
+  └── Policy Signer — Enforces spending limits server-side
 
-### 3.2 Rate Limiting
+Private keys NEVER leave Nunchuk's secure enclave.
+Agent key has restricted capabilities only.
+```
 
-- **Algorithm**: In-memory sliding window counter per client IP
-- **Limit**: 60 requests per minute per IP
-- **Headers**: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
-- **Response**: HTTP 429 with `retryAfter` seconds when exceeded
-- **Cleanup**: Expired entries pruned every 60 seconds to prevent memory leak
-
-### 3.3 CORS
-
-- **Allowed Origins**: `FRONTEND_URL` environment variable + localhost:3000/3001
-- **Methods**: GET, POST, OPTIONS
-- **Headers**: Content-Type, Authorization
-- **Credentials**: Enabled
-- **Preflight Cache**: 24 hours
-
-### 3.4 Security Headers
-
-| Header | Value | Purpose |
-|---|---|---|
-| X-Content-Type-Options | nosniff | Prevent MIME sniffing |
-| X-Frame-Options | DENY | Prevent clickjacking |
-| X-XSS-Protection | 1; mode=block | XSS filter |
-| Strict-Transport-Security | max-age=31536000; includeSubDomains | Force HTTPS |
-| Content-Security-Policy | default-src 'self' | Restrict content sources |
-| X-Powered-By | (removed) | Hide server technology |
-
-### 3.5 Error Handling
-
-Typed error classes prevent information leakage:
-
-- `AppError` → Base class with code, message, statusCode
-- `ValidationError` → 400 with Zod details
-- `ScanError` → 422 for address decode failures
-- `RateLimitError` → 429
-- `NotFoundError` → 404
-
-Unknown/unexpected errors return generic "An unexpected error occurred" — no stack traces, no internal details.
-
-### 3.6 Request Body Size Limit
-
-- Maximum body size: 256KB
-- Checked via `Content-Length` header before parsing
-- Returns 413 if exceeded
-
----
-
-## 4. Quantum Scanner Security Model
-
-### 4.1 Risk Classification Integrity
-
-All risk classifications are derived from the Google Quantum AI whitepaper (March 30, 2026). No estimated or hallucinated data:
-
-| Address Type | Spent? | Risk | Whitepaper Basis |
-|---|---|---|---|
-| P2PK | always | CRITICAL | Key directly in scriptPubKey |
-| P2PKH | yes | HIGH | Key revealed in scriptSig |
-| P2WPKH | yes | HIGH | Key revealed in witness |
-| P2TR | always | MEDIUM | Tweaked key in output |
-| P2PKH/P2WPKH | no | LOW | Hash-protected (HASH160) |
-| P2SH/P2WSH | no | LOW | Hash-protected |
-
-### 4.2 Mempool API Integration
-
-- **Source**: mempool.space signet API (public, no auth)
-- **Timeout**: 10 seconds per request
-- **Fallback**: If mempool API fails, scanner falls back to manual mode with `spent=false`
-- **No secrets**: Public API, no keys stored
-
-### 4.3 UTXO Monitor
-
-- **Polling interval**: 30 seconds
-- **Broadcast**: WebSocket to all connected clients
-- **Events**: `scanner:risk_changed` (key exposure detected), `scanner:tx_detected` (new transaction)
-- **No persistent storage**: Watch list is in-memory, clears on restart
-
----
-
-## 5. Wallet Security (Nunchuk Integration)
-
-- Private keys **NEVER** leave Nunchuk's secure enclave
-- AI agent key has bounded authority (policy co-signer enforces limits)
-- All transactions above the daily limit require human approval
-- Transaction history is auditable
-- Testnet/signet only — no mainnet operations
-
----
-
-## 6. Environment & Secrets Management
+### Environment & Secrets
 
 | Secret | Storage | Never In |
 |---|---|---|
 | ANTHROPIC_API_KEY | Environment variable | Git, client bundle |
 | ALBY_NWC_URL | Environment variable | Git, client bundle |
 | COGCOIN_API_KEY | Environment variable | Git, client bundle |
-| CORS_ORIGIN | Environment variable | — |
-| PORT | Environment variable | — |
 
-`.env` is in `.gitignore`. `.env.example` contains only placeholder values.
+`.env` is in `.gitignore`. Secret audit passed: no keys in git history or source.
 
----
+### Test Coverage
 
-## 7. Test Coverage
-
-| Test Suite | Tests | Status |
+| Suite | Tests | Status |
 |---|---|---|
-| Address type detection | 11 tests | All pass |
-| Public key exposure | 8 tests | All pass |
-| Risk assessment | 7 tests | All pass |
-| Batch wallet analysis | 2 tests | All pass |
-| Network stats verification | 1 test | All pass |
-| **Total** | **29 tests** | **29 pass, 0 fail** |
+| Address type detection | 11 | Pass |
+| Public key exposure | 8 | Pass |
+| Risk assessment | 7 | Pass |
+| Batch wallet analysis | 2 | Pass |
+| Network stats verification | 1 | Pass |
+| **Total** | **29** | **29 pass, 0 fail** |
 
 Run: `bun test tests/quantum.test.ts`
 
+### Load Test Results
+
+- 100 concurrent GET requests: **100% success** (all HTTP 200)
+- Single request latency (local): <10ms
+- Single request latency (with mempool API): ~2.2s
+
 ---
 
-## 8. Known Limitations
+## Deployment
 
-1. Rate limiter is in-memory — resets on server restart, not shared across instances
+### Infrastructure
+```
+GitHub (source) → GitHub Actions (CI)
+                     ├── Lint (oxlint)
+                     ├── Type Check (tsc)
+                     └── Build (both apps)
+
+main branch push → Vercel (dashboard auto-deploy)
+                 → Railway/Render (API auto-deploy)
+```
+
+### Environment isolation
+- **Development** — localhost:3000 (dashboard) + localhost:3001 (API)
+- **Production** — satsguard.vercel.app + satsguard-api.railway.app
+- **Bitcoin network** — Signet/testnet ONLY (never mainnet)
+
+## Performance targets
+
+| Metric | Target |
+|--------|--------|
+| First Contentful Paint | < 1.5s |
+| Time to Interactive | < 2.5s |
+| Claude API latency | < 3s |
+| Lightning payment | < 2s |
+| Quantum scan (single) | < 100ms |
+| Quantum scan (batch 10) | < 500ms |
+| WebSocket reconnect | < 1s |
+
+## Known Limitations
+
+1. Rate limiter is in-memory — resets on restart, not shared across instances
 2. UTXO monitor uses polling (30s) not mempool WebSocket — acceptable for demo
-3. P2SH/P2WSH risk assessment is conservative (treated as LOW without script analysis)
-4. P2PK cannot be tested via address (it's a script type, not an address format) — classified by API hint parameter
-5. Migration planner generates instructions, not actual unsigned transactions (bitcoinjs-lib could be extended for this)
+3. P2SH/P2WSH risk assessment is conservative (LOW without script analysis)
+4. P2PK cannot be tested via address (script type, not address format)
+5. Migration planner generates instructions, not unsigned transactions

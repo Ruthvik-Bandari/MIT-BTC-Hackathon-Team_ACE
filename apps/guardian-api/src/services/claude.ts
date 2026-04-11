@@ -159,7 +159,13 @@ export async function parseGuardianIntent(
   const response = await anthropic.messages.create({
     model: MODEL,
     max_tokens: MAX_TOKENS,
-    system: GUARDIAN_SYSTEM_PROMPT,
+    system: [
+      {
+        type: "text",
+        text: GUARDIAN_SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
     messages: [
       {
         role: "user",
@@ -368,7 +374,13 @@ export async function streamGuardianIntent(
     const stream = anthropic.messages.stream({
       model: MODEL,
       max_tokens: MAX_TOKENS,
-      system: GUARDIAN_SYSTEM_PROMPT,
+      system: [
+        {
+          type: "text",
+          text: GUARDIAN_SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" },
+        },
+      ],
       messages: [
         {
           role: "user",
