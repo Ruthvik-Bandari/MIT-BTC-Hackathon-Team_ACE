@@ -50,6 +50,36 @@ export const addressQuerySchema = z.object({
     .transform((val) => val === "true"),
 });
 
+/**
+ * POST /api/scanner/monitor/watch — add address to watch list
+ */
+export const watchRequestSchema = z.object({
+  address: z
+    .string()
+    .min(20, "Bitcoin address too short")
+    .max(90, "Bitcoin address too long")
+    .refine(
+      (addr) =>
+        addr.startsWith("tb1") ||
+        addr.startsWith("bc1") ||
+        addr.startsWith("bcrt1") ||
+        /^[123mn]/.test(addr),
+      "Invalid Bitcoin address prefix"
+    ),
+});
+
+/**
+ * GET /api/scanner/timeline/year/:year — single year lookup
+ */
+export const yearParamsSchema = z.object({
+  year: z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => val >= 2024 && val <= 2040, "Year must be between 2024 and 2040"),
+});
+
 export type AnalyzeRequest = z.infer<typeof analyzeRequestSchema>;
 export type AddressParams = z.infer<typeof addressParamsSchema>;
 export type AddressQuery = z.infer<typeof addressQuerySchema>;
+export type WatchRequest = z.infer<typeof watchRequestSchema>;
+export type YearParams = z.infer<typeof yearParamsSchema>;
