@@ -1,0 +1,68 @@
+###############################################################################
+# SatsGuard — Self-Hosting Docker Compose
+# Run your own guardian node: docker compose up
+###############################################################################
+
+services:
+  guardian-api:
+    build:
+      context: ./apps/guardian-api
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - BITCOIN_NETWORK=signet
+      - MEMPOOL_API_URL=https://mempool.space/signet/api
+      - CORS_ORIGIN=http://localhost:3000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - ALBY_NWC_URL=${ALBY_NWC_URL}
+      - COGCOIN_API_KEY=${COGCOIN_API_KEY}
+      - NUNCHUK_API_KEY=${NUNCHUK_API_KEY}
+      - NUNCHUK_WALLET_ID=${NUNCHUK_WALLET_ID}
+      - IPFS_GATEWAY_URL=http://ipfs:8080
+      - IPFS_API_URL=http://ipfs:5001
+    depends_on:
+      ipfs:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001
+      - NEXT_PUBLIC_WS_URL=ws://localhost:3001/ws
+    depends_on:
+      guardian-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ipfs:
+    image: ipfs/kubo:latest
+    ports:
+      - "4001:4001"   # Swarm
+      - "5001:5001"   # API
+      - "8080:8080"   # Gateway
+    volumes:
+      - ipfs_data:/data/ipfs
+    healthcheck:
+      test: ["CMD", "ipfs", "id"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  ipfs_data:
