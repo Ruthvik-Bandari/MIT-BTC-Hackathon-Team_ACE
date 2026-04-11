@@ -32,12 +32,12 @@ SatsGuard is a unified security dashboard that solves both problems:
 
 ```
 User: "Let my AI spend up to 5000 sats per day"
-Guardian: Policy updated. Daily limit set to 5,000 sats. 
+Guardian: Policy updated. Daily limit set to 5,000 sats.
           Transactions above this require your approval.
 
 User: "Send 10000 sats to tb1q..."
 Guardian: This exceeds your daily limit. Queued for manual approval.
-          WARNING: Destination address has HIGH quantum risk — 
+          WARNING: Destination address has HIGH quantum risk —
           public key is exposed. Consider migrating first.
 
 User: "Scan my wallet for quantum risk"
@@ -64,25 +64,26 @@ Guardian: Found 3 addresses with exposed public keys:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   FRONTEND (Next.js 15)                      │
-│  App Router + SSR | TanStack Query + Zustand                 │
-│  Tailwind CSS v4 + AnimateUI | xior HTTP client              │
+│                  FRONTEND (Next.js 15.5)                     │
+│  App Router + SSR + Turbopack | React 19                     │
+│  TanStack Query v5 + Zustand v5 | xior HTTP client           │
+│  Tailwind CSS v4 + shadcn/ui + AnimateUI (Motion 12)         │
 └────────────────────────┬────────────────────────────────────┘
                          │ REST + SSE + WebSocket
 ┌────────────────────────▼────────────────────────────────────┐
-│                GUARDIAN API (Hono + Bun)                      │
+│               GUARDIAN API (Hono 4 + Bun 1.3)                │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐  │
 │  │ Claude AI    │  │ Nunchuk CLI  │  │ Quantum Scanner   │  │
-│  │ Intent parse │  │ Wallet ops   │  │ Address risk      │  │
-│  │ SSE stream   │  │ Policy mgmt  │  │ Migration plans   │  │
-│  │ Risk warnings│  │ Co-signing   │  │ BIP-360 readiness │  │
+│  │ Sonnet 4     │  │ Group wallet │  │ bitcoinjs-lib v7  │  │
+│  │ Intent parse │  │ Policy mgmt  │  │ Risk classify     │  │
+│  │ SSE stream   │  │ Co-signing   │  │ Migration plans   │  │
 │  └──────────────┘  └──────────────┘  └───────────────────┘  │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐  │
 │  │ Lightning    │  │ Cogcoin      │  │ UTXO Monitor      │  │
-│  │ Alby NWC     │  │ OP_RETURN    │  │ Real-time alerts  │  │
-│  │ Micropayments│  │ Audit trail  │  │ mempool.space     │  │
+│  │ Alby NWC v7  │  │ OP_RETURN    │  │ mempool.space     │  │
+│  │ Micropayments│  │ Audit trail  │  │ Real-time alerts  │  │
 │  └──────────────┘  └──────────────┘  └───────────────────┘  │
 └────────────────────────┬────────────────────────────────────┘
                          │
@@ -91,25 +92,33 @@ Guardian: Found 3 addresses with exposed public keys:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Tech Stack
+## Tech Stack (Verified)
 
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Runtime | Bun | Native TypeScript, 8x faster installs |
-| Backend | Hono + TypeScript (strict) + Zod | Lightweight, edge-ready, type-safe |
-| Frontend | Next.js 15 App Router + SSR | Performance + React Server Components |
-| AI | Claude Sonnet 4 via @anthropic-ai/sdk | Best structured output + streaming |
-| Server State | TanStack Query v5 | Caching, invalidation, optimistic updates |
-| Client State | Zustand | Minimal, fast, no boilerplate |
-| Forms | React Hook Form + Zod | Schema-level validation |
-| Styling | Tailwind CSS v4 + AnimateUI | Dark theme, animations |
-| HTTP Client | xior | Lighter than axios, interceptors |
-| Wallet | Nunchuk CLI + Agent Skills | First product on these tools |
-| Lightning | Alby NWC (@getalby/sdk) | Instant micropayments |
-| Scanner | bitcoinjs-lib v7 + mempool.space | Real address decoding + on-chain data |
-| Anchoring | Cogcoin OP_RETURN (@cogcoin/client) | On-chain audit trail |
-| Real-time | Bun native WebSocket | Live transaction updates |
-| Linting | oxlint | 100x faster than ESLint |
+| Layer | Package | Version | Purpose |
+|-------|---------|---------|---------|
+| Runtime | Bun | 1.3.8 | TypeScript runtime + package manager |
+| Backend Framework | Hono | 4.12 | Lightweight HTTP framework for Bun |
+| Validation | Zod + @hono/zod-validator | 3.25 | Request/response schema validation |
+| Frontend Framework | Next.js | 15.5 | App Router + SSR + Turbopack |
+| UI Library | React | 19.2 | Server + client components |
+| Server State | @tanstack/react-query | 5.75 | Caching, mutations, invalidation |
+| Client State | Zustand | 5.0 | Minimal global state management |
+| Forms | react-hook-form + @hookform/resolvers | 7.56 | Schema-driven form validation |
+| Styling | Tailwind CSS | 4.2 | Utility-first CSS framework |
+| UI Components | shadcn/ui + AnimateUI (Motion 12) | 4.2 / 12.38 | Dark theme + animated components |
+| Icons | Lucide React | 1.8 | Consistent icon set |
+| HTTP Client | xior | 0.7 | Lightweight axios alternative |
+| Keyboard Shortcuts | @tanstack/react-hotkeys | 0.9 | Command palette + shortcuts |
+| AI | @anthropic-ai/sdk | 0.39 | Claude Sonnet 4 intent parsing |
+| Wallet | nunchuk-cli | 0.1 | Bounded-authority group wallets |
+| Bitcoin | bitcoinjs-lib | 7.0 | Address decoding + type detection |
+| Lightning | @getalby/sdk | 7.0 | Alby NWC Lightning payments |
+| Blockchain Data | mempool.space API | - | UTXO lookups, spent detection |
+| Anchoring | @cogcoin/client | 0.5 | OP_RETURN on-chain audit trail |
+| Image Optimization | Sharp | 0.33 | Next.js image processing |
+| Real-time | Bun native WebSocket | - | Live transaction updates |
+| Linting | oxlint | 0.16 | 100x faster than ESLint |
+| TypeScript | typescript | 5.8 | Strict mode, zero `any` types |
 
 ## Quick Start
 
@@ -141,44 +150,44 @@ bun scripts/seed-demo.ts
 
 ### Guardian (Claude AI)
 ```
-POST /api/guardian/parse     # Parse natural language → structured action
+POST /api/guardian/parse        # Parse natural language → structured action
 ```
 
 ### Wallet (Nunchuk)
 ```
-POST /api/wallet/create      # Create group wallet (user + agent + co-signer)
-POST /api/wallet/set-policy  # Set daily limits, per-tx limits
-POST /api/wallet/send        # Initiate transaction (policy-checked)
-POST /api/wallet/approve/:id # Approve pending transaction
-POST /api/wallet/deny/:id    # Deny pending transaction
-GET  /api/wallet/balance     # Query balance
-GET  /api/wallet/transactions # Transaction history
+POST /api/wallet/create         # Create group wallet (user + agent + co-signer)
+POST /api/wallet/set-policy     # Set daily limits, per-tx limits
+POST /api/wallet/send           # Initiate transaction (policy-checked)
+POST /api/wallet/approve/:txId  # Approve pending transaction
+POST /api/wallet/deny/:txId     # Deny pending transaction
+GET  /api/wallet/balance        # Query balance
+GET  /api/wallet/transactions   # Transaction history
 ```
 
 ### Quantum Scanner
 ```
-POST /api/scanner/analyze        # Batch scan wallet addresses
-GET  /api/scanner/address/:addr  # Single address quantum risk
-GET  /api/scanner/network-stats  # Network-wide vulnerability stats
+POST /api/scanner/analyze       # Batch scan wallet addresses
+GET  /api/scanner/address/:addr # Single address quantum risk
+GET  /api/scanner/network-stats # Network-wide vulnerability stats
 ```
 
 ### Lightning (Alby NWC)
 ```
-POST /api/lightning/pay      # Pay Lightning invoice
-GET  /api/lightning/balance   # Lightning wallet balance
+POST /api/lightning/pay         # Pay Lightning invoice
+GET  /api/lightning/balance     # Lightning wallet balance
 ```
 
 ### Cogcoin (On-Chain Audit)
 ```
-POST /api/cogcoin/anchor     # Anchor guardian event via OP_RETURN
-GET  /api/cogcoin/verify/:tx # Verify anchored event on-chain
-GET  /api/cogcoin/identity   # SatsGuard identity info
+POST /api/cogcoin/anchor        # Anchor guardian event via OP_RETURN
+GET  /api/cogcoin/verify/:txId  # Verify anchored event on-chain
+GET  /api/cogcoin/identity      # SatsGuard identity info
 ```
 
 ### System
 ```
-GET  /api/health             # Health check + service availability
-WS   /ws                     # Real-time events (tx updates, scan alerts)
+GET  /api/health                # Health check + service availability
+WS   /ws                        # Real-time events (tx updates, scan alerts)
 ```
 
 ## Guardian Intent Classification
@@ -204,56 +213,157 @@ Based on [Google Quantum AI's March 2026 whitepaper](https://quantumai.google/st
 | **MEDIUM** | P2TR | Tweaked key visible | Consider script-path only |
 | **LOW** | P2PKH, P2WPKH | Unspent (hash-protected) | Safe at rest, avoid reuse |
 
-## Project Structure
+## Monorepo Structure
 
 ```
-apps/
-├── guardian-api/                 # Backend (Hono + Bun)
-│   └── src/
-│       ├── index.ts              # Server + WebSocket + route wiring
-│       ├── routes/
-│       │   ├── guardian.ts       # Claude AI intent parsing
-│       │   ├── wallet.ts        # Nunchuk wallet operations
-│       │   ├── scanner.ts       # Quantum vulnerability scanner
-│       │   ├── lightning.ts     # Alby Lightning payments
-│       │   ├── cogcoin.ts       # On-chain audit anchoring
-│       │   └── health.ts        # Service health check
-│       ├── services/
-│       │   ├── claude.ts        # Claude AI engine + streaming
-│       │   ├── nunchuk.ts       # Nunchuk CLI wrapper
-│       │   ├── scanner.ts       # Address risk classification
-│       │   ├── quantum.ts       # Deep quantum analysis (bitcoinjs-lib)
-│       │   ├── alby.ts          # Lightning via Alby NWC
-│       │   ├── cogcoin.ts       # Cogcoin OP_RETURN anchoring
-│       │   ├── mempool.ts       # mempool.space API client
-│       │   ├── migration.ts     # Quantum migration planner
-│       │   ├── bip360.ts        # Post-quantum BIP-360 readiness
-│       │   ├── timeline.ts      # Quantum threat timeline
-│       │   └── monitor.ts       # Real-time UTXO monitoring
-│       ├── types/                # Type definitions
-│       ├── utils/                # Shared utility types
-│       ├── schemas/              # Zod validation schemas
-│       └── middleware/           # Error handling
+satsguard/
+├── package.json                                    # Workspace root
+├── .env.example                                    # Environment template
+├── .github/workflows/ci.yml                        # CI: lint + typecheck
 │
-└── dashboard/                    # Frontend (Next.js 15)
-    └── src/
-        ├── app/                  # Pages: /, /guardian, /scanner
-        ├── components/
-        │   ├── guardian/         # Chat interface
-        │   ├── wallet/           # Balance, policy, transactions
-        │   ├── scanner/          # Risk meter, address cards, timer
-        │   ├── lightning/        # Payment widget
-        │   └── ui/               # Shared components
-        ├── dal/                  # Data Access Layer → API
-        ├── hooks/                # TanStack Query hooks
-        ├── stores/               # Zustand (chat, wallet, UI)
-        ├── schemas/              # Frontend Zod validation
-        └── providers/            # Query, Theme, WebSocket
-
-scripts/
-├── test-guardian.ts              # 12 intent classification tests
-├── test-edge-cases.ts            # 20 edge case regression tests
-└── seed-demo.ts                  # Demo walkthrough for judges
+├── apps/
+│   ├── guardian-api/                               # ── BACKEND (Hono + Bun) ──
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── Dockerfile                              # Docker deployment
+│   │   ├── railway.json                            # Railway config
+│   │   ├── render.yaml                             # Render config
+│   │   ├── src/
+│   │   │   ├── index.ts                            # Bun.serve + Hono + WebSocket
+│   │   │   │
+│   │   │   ├── routes/
+│   │   │   │   ├── guardian.ts                     # POST /api/guardian/parse
+│   │   │   │   ├── wallet.ts                       # /api/wallet/* (Nunchuk CLI)
+│   │   │   │   ├── scanner.ts                      # /api/scanner/* (quantum risk)
+│   │   │   │   ├── lightning.ts                    # /api/lightning/* (Alby NWC)
+│   │   │   │   ├── cogcoin.ts                      # /api/cogcoin/* (OP_RETURN)
+│   │   │   │   └── health.ts                       # GET /api/health
+│   │   │   │
+│   │   │   ├── services/
+│   │   │   │   ├── claude.ts                       # Claude Sonnet 4 intent parsing
+│   │   │   │   ├── nunchuk.ts                      # Nunchuk CLI wrapper (Bun.spawn)
+│   │   │   │   ├── scanner.ts                      # Address type detection + risk
+│   │   │   │   ├── quantum.ts                      # Deep analysis (bitcoinjs-lib v7)
+│   │   │   │   ├── alby.ts                         # Lightning payments (Alby NWC)
+│   │   │   │   ├── cogcoin.ts                      # Cogcoin OP_RETURN anchoring
+│   │   │   │   ├── mempool.ts                      # mempool.space UTXO lookups
+│   │   │   │   ├── migration.ts                    # Quantum migration step planner
+│   │   │   │   ├── bip360.ts                       # Post-quantum BIP-360 readiness
+│   │   │   │   ├── timeline.ts                     # Quantum threat timeline (2024-2035)
+│   │   │   │   └── monitor.ts                      # Real-time UTXO monitoring
+│   │   │   │
+│   │   │   ├── middleware/
+│   │   │   │   └── error.ts                        # Typed error handler
+│   │   │   │
+│   │   │   ├── schemas/
+│   │   │   │   └── scanner.schema.ts               # Zod validation for scanner
+│   │   │   │
+│   │   │   ├── types/
+│   │   │   │   ├── guardian.ts                      # Guardian + Cogcoin types
+│   │   │   │   ├── quantum.ts                      # Quantum analysis types
+│   │   │   │   └── cogcoin-client.d.ts             # @cogcoin/client type stub
+│   │   │   │
+│   │   │   └── utils/
+│   │   │       └── types.ts                        # Shared API types
+│   │   │
+│   │   └── tests/
+│   │       └── quantum.test.ts                     # Quantum scanner tests
+│   │
+│   └── dashboard/                                  # ── FRONTEND (Next.js 15.5) ──
+│       ├── package.json
+│       ├── tsconfig.json
+│       ├── next.config.ts
+│       ├── postcss.config.mjs
+│       ├── components.json                         # shadcn/ui config
+│       ├── vercel.json                             # Vercel deployment
+│       ├── src/
+│       │   ├── app/
+│       │   │   ├── layout.tsx                      # Root layout + providers
+│       │   │   ├── page.tsx                        # Home / dashboard
+│       │   │   ├── globals.css                     # Tailwind v4 + theme
+│       │   │   ├── guardian/page.tsx                # Guardian chat page
+│       │   │   └── scanner/page.tsx                # Quantum scanner page
+│       │   │
+│       │   ├── components/
+│       │   │   ├── guardian/
+│       │   │   │   ├── GuardianChat.tsx            # Chat interface
+│       │   │   │   ├── MessageBubble.tsx           # Message display
+│       │   │   │   └── IntentIndicator.tsx         # Parsed action badge
+│       │   │   ├── wallet/
+│       │   │   │   ├── WalletOverview.tsx          # Balance + policy
+│       │   │   │   ├── PolicyEditor.tsx            # Edit spending limits
+│       │   │   │   └── TransactionList.tsx         # Tx history
+│       │   │   ├── scanner/
+│       │   │   │   ├── QuantumRiskMeter.tsx        # Risk traffic light
+│       │   │   │   ├── AddressCard.tsx             # Per-address risk
+│       │   │   │   ├── QuantumTimer.tsx            # 9-min attack countdown
+│       │   │   │   └── NetworkStats.tsx            # 6.9M BTC stats
+│       │   │   ├── lightning/
+│       │   │   │   └── PaymentDemo.tsx             # Lightning payment widget
+│       │   │   ├── animate-ui/                     # AnimateUI (Motion 12)
+│       │   │   │   ├── components/backgrounds/     # Stars background
+│       │   │   │   └── primitives/                 # Effects, buttons, text
+│       │   │   └── ui/                             # shadcn/ui components
+│       │   │       ├── button.tsx, card.tsx, badge.tsx, input.tsx
+│       │   │       ├── navbar.tsx, skeleton.tsx
+│       │   │       ├── command-palette.tsx          # Cmd+K palette
+│       │   │       ├── crypto-icons-bg.tsx          # BTC background art
+│       │   │       └── error-boundary.tsx           # Error fallback
+│       │   │
+│       │   ├── dal/                                # Data Access Layer
+│       │   │   ├── guardian.dal.ts                  # → /api/guardian/*
+│       │   │   ├── wallet.dal.ts                    # → /api/wallet/*
+│       │   │   ├── scanner.dal.ts                   # → /api/scanner/*
+│       │   │   └── lightning.dal.ts                 # → /api/lightning/*
+│       │   │
+│       │   ├── hooks/
+│       │   │   ├── useGuardian.ts                   # Guardian mutations
+│       │   │   ├── useWallet.ts                     # Wallet queries + mutations
+│       │   │   ├── useQuantumScan.ts                # Scanner queries
+│       │   │   ├── useLightning.ts                  # Lightning mutations
+│       │   │   ├── useWebSocket.ts                  # WS auto-reconnect
+│       │   │   ├── useHotkeys.ts                    # Keyboard shortcuts
+│       │   │   └── use-is-in-view.tsx               # Intersection observer
+│       │   │
+│       │   ├── stores/
+│       │   │   ├── chat.store.ts                    # Chat message history
+│       │   │   ├── wallet.store.ts                  # Active wallet state
+│       │   │   └── ui.store.ts                      # Theme, sidebar, modals
+│       │   │
+│       │   ├── schemas/
+│       │   │   ├── guardian.schema.ts               # Guardian input validation
+│       │   │   ├── wallet.schema.ts                 # Wallet form schemas
+│       │   │   └── transaction.schema.ts            # Transaction schemas
+│       │   │
+│       │   ├── providers/
+│       │   │   ├── QueryProvider.tsx                 # TanStack Query client
+│       │   │   ├── ThemeProvider.tsx                 # Dark mode
+│       │   │   ├── WebSocketProvider.tsx             # WS context
+│       │   │   └── HotkeysProvider.tsx               # Keyboard shortcuts
+│       │   │
+│       │   └── lib/
+│       │       ├── xior.ts                          # HTTP client instance
+│       │       ├── types.ts                         # Shared frontend types
+│       │       ├── constants.ts                     # API URLs, risk colors
+│       │       ├── formatters.ts                    # Sats/BTC formatting
+│       │       ├── utils.ts                         # cn() + helpers
+│       │       └── get-strict-context.tsx            # Type-safe React context
+│       │
+│       └── public/                                  # Static assets
+│
+├── scripts/
+│   ├── test-guardian.ts                             # 12 intent classification tests
+│   ├── test-edge-cases.ts                           # 20 edge case regressions
+│   ├── seed-demo.ts                                 # 7-step demo walkthrough
+│   ├── demo-seed.sh                                 # Shell demo seeder
+│   ├── setup-testnet.sh                             # Testnet bootstrap
+│   ├── test-endpoints.sh                            # cURL endpoint tests
+│   └── localhost-backup.sh                          # Local backup script
+│
+├── docs/
+│   └── ARCHITECTURE.md                              # System architecture docs
+│
+└── render.yaml                                      # Render deployment (root)
 ```
 
 ## Research & Motivation
