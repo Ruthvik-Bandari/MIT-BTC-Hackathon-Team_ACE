@@ -19,9 +19,9 @@
     "clsx": "^2.1.1",
     "lucide-react": "^1.8.0",
     "motion": "^12.38.0",
-    "next": "^15.3.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
+    "next": "^16.2.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "react-hook-form": "^7.56.1",
     "react-use-measure": "^2.1.7",
     "shadcn": "^4.2.0",
@@ -33,12 +33,12 @@
     "zustand": "^5.0.3"
   },
   "devDependencies": {
-    "typescript": "^5.8.3",
-    "@types/react": "^19.1.1",
-    "@types/react-dom": "^19.1.1",
     "@tailwindcss/postcss": "^4.1.4",
-    "tailwindcss": "^4.1.4",
+    "@types/bun": "^1.2.9",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "oxlint": "^0.16.6",
-    "@types/bun": "^1.2.9"
+    "tailwindcss": "^4.1.4",
+    "typescript": "^5.8.3"
   }
 }

@@ -64,7 +64,7 @@ Guardian: Found 3 addresses with exposed public keys:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  FRONTEND (Next.js 15.5)                     │
+│                  FRONTEND (Next.js 16)                       │
 │  App Router + SSR + Turbopack | React 19                     │
 │  TanStack Query v5 + Zustand v5 | xior HTTP client           │
 │  Tailwind CSS v4 + shadcn/ui + AnimateUI (Motion 12)         │
@@ -99,7 +99,7 @@ Guardian: Found 3 addresses with exposed public keys:
 | Runtime | Bun | 1.3.8 | TypeScript runtime + package manager |
 | Backend Framework | Hono | 4.12 | Lightweight HTTP framework for Bun |
 | Validation | Zod + @hono/zod-validator | 3.25 | Request/response schema validation |
-| Frontend Framework | Next.js | 15.5 | App Router + SSR + Turbopack |
+| Frontend Framework | Next.js | 16.2 | App Router + SSR + Turbopack |
 | UI Library | React | 19.2 | Server + client components |
 | Server State | @tanstack/react-query | 5.75 | Caching, mutations, invalidation |
 | Client State | Zustand | 5.0 | Minimal global state management |
@@ -269,7 +269,7 @@ satsguard/
 │   │   └── tests/
 │   │       └── quantum.test.ts                     # Quantum scanner tests
 │   │
-│   └── dashboard/                                  # ── FRONTEND (Next.js 15.5) ──
+│   └── dashboard/                                  # ── FRONTEND (Next.js 16) ──
 │       ├── package.json
 │       ├── tsconfig.json
 │       ├── next.config.ts
