@@ -115,6 +115,31 @@ export interface LightningBalance {
   currency: string;
 }
 
+// ── Nunchuk Webhook Events ──────────────────────────────────────
+
+export type NunchukWebhookEventType =
+  | "wallet.transaction.updated"
+  | "wallet.transaction.deleted"
+  | "wallet.platform_key.policy_changed"
+  | "wallet.replacement_created"
+  | "wallet.downgraded"
+  | "wallet.dummy_transaction.updated"
+  | "group.sandbox.updated"
+  | "group.sandbox.finalized"
+  | "group.deleted"
+  | "group.invitation.created"
+  | "group.invitation.accepted"
+  | "group.invitation.removed"
+  | "group.invitation.denied";
+
+export interface NunchukWebhookPayload {
+  id: string;
+  type: NunchukWebhookEventType;
+  api_version: string;
+  created_at: string;
+  data: Record<string, unknown>;
+}
+
 // ── WebSocket Events ────────────────────────────────────────────
 
 export type WsEventType =
@@ -124,7 +149,10 @@ export type WsEventType =
   | "transaction:denied"
   | "guardian:response"
   | "scanner:complete"
-  | "lightning:settled";
+  | "lightning:settled"
+  | "webhook:transaction"
+  | "webhook:policy"
+  | "webhook:wallet";
 
 export interface WsMessage {
   type: WsEventType;

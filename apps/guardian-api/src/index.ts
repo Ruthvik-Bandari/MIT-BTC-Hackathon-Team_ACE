@@ -10,6 +10,7 @@ import { guardianRoutes } from "./routes/guardian.js";
 import { scannerRoutes } from "./routes/scanner.js";
 import { cogcoinRoutes } from "./routes/cogcoin.js";
 import { resilienceRoutes } from "./routes/resilience.js";
+import { webhookRoutes } from "./routes/webhook.js";
 import { errorHandler } from "./middleware/error.js";
 import { initCogcoin } from "./services/cogcoin.js";
 import type { WsMessage, WsEventType } from "./utils/types.js";
@@ -37,6 +38,7 @@ app.route("/api/guardian", guardianRoutes);
 app.route("/api/scanner", scannerRoutes);
 app.route("/api/cogcoin", cogcoinRoutes);
 app.route("/api/resilience", resilienceRoutes);
+app.route("/api/webhook", webhookRoutes);
 
 // ── Bun native HTTP + WebSocket server ──────────────────────────
 
@@ -101,5 +103,6 @@ console.log(`
   ├─ WS      → ws://localhost:${server.port}/ws
   ├─ Health  → http://localhost:${server.port}/api/health
   ├─ Cogcoin → http://localhost:${server.port}/api/cogcoin/anchor
+  ├─ Webhook → http://localhost:${server.port}/api/webhook/nunchuk
   └─ Network: ${process.env.BITCOIN_NETWORK ?? "signet"}
 `);

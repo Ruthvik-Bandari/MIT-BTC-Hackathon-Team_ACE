@@ -214,6 +214,19 @@ GET  /api/cogcoin/verify/:txId  # Verify anchored event on-chain
 GET  /api/cogcoin/identity      # SatsGuard identity info
 ```
 
+### Nunchuk Webhook (Real-Time Events)
+```
+POST /api/webhook/nunchuk       # Receive Nunchuk portal webhook events
+GET  /api/webhook/nunchuk       # Webhook endpoint health check
+```
+
+Configure in the [Nunchuk Developer Portal](https://developer.nunchuk.io) → Webhooks → Add Endpoint:
+- **URL**: `https://<your-domain>/api/webhook/nunchuk`
+- **Events**: `wallet.transaction.updated`, `wallet.platform_key.policy_changed`, etc.
+
+Incoming events are broadcast to all connected WebSocket clients in real time
+and significant events (transactions, policy changes) are anchored on-chain via Cogcoin.
+
 ### System
 ```
 GET  /api/health                # Health check + service availability
