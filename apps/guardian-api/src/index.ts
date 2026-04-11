@@ -1,62 +1,57 @@
 import express from "express";
-import {
-  corsMiddleware,
-  rateLimiter,
-  bodySizeGuard,
-  errorHandler,
-  securityHeaders,
-} from "./middleware/security.js";
-import { scannerRouter } from "./routes/scanner.js";
-import { healthRouter } from "./routes/health.js";
+import cors from "cors";
+import { WebSocketServer } from "ws";
+import { createServer } from "http";
 
 const app = express();
-const PORT = parseInt(process.env["PORT"] ?? "3001", 10);
+const port = Number(process.env.PORT) || 3001;
 
-// ---------------------------------------------------------------------------
-// Global Middleware
-// ---------------------------------------------------------------------------
+// Middleware
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || "*",
+  credentials: true,
+}));
+app.use(express.json());
 
-app.use(securityHeaders);
-app.use(corsMiddleware);
-app.use(rateLimiter);
-app.use(bodySizeGuard(256)); // 256KB max body
-app.use(express.json({ limit: "256kb" }));
-
-// ---------------------------------------------------------------------------
-// Routes
-// ---------------------------------------------------------------------------
-
-app.use("/api/health", healthRouter);
-app.use("/api/scanner", scannerRouter);
-
-// ---------------------------------------------------------------------------
-// 404 Catch-all
-// ---------------------------------------------------------------------------
-
-app.use((_req: express.Request, res: express.Response) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: "NOT_FOUND",
-      message: "Endpoint not found",
-    },
+// Health check
+app.get("/api/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    service: "satsguard-guardian-api",
+    network: process.env.BITCOIN_NETWORK || "signet",
+    timestamp: new Date().toISOString(),
   });
 });
 
-// ---------------------------------------------------------------------------
-// Error Handler (must be last)
-// ---------------------------------------------------------------------------
-
-app.use(errorHandler);
-
-// ---------------------------------------------------------------------------
-// Start Server
-// ---------------------------------------------------------------------------
-
-app.listen(PORT, () => {
-  console.log(`🛡️  SatsGuard Guardian API running on http://localhost:${PORT}`);
-  console.log(`📡 Scanner:  http://localhost:${PORT}/api/scanner`);
-  console.log(`💚 Health:   http://localhost:${PORT}/api/health`);
+// Placeholder routes — teammates will implement
+app.post("/api/guardian/parse", (_req, res) => {
+  res.status(501).json({ error: "Not implemented yet — Ruthvik's task" });
 });
 
-export default app;
+app.post("/api/wallet/create", (_req, res) => {
+  res.status(501).json({ error: "Not implemented yet — Om's task" });
+});
+
+app.get("/api/scanner/network-stats", (_req, res) => {
+  res.json({
+    totalExposedBTC: 6_900_000,
+    p2pkAddresses: 1_700_000,
+    attackTimeMinutes: 9,
+    qubitsRequired: 500_000,
+    source: "Google Quantum AI, March 2026",
+  });
+});
+
+// HTTP server + WebSocket
+const server = createServer(app);
+const wss = new WebSocketServer({ server, path: "/ws" });
+
+wss.on("connection", (ws) => {
+  ws.send(JSON.stringify({ type: "connected", message: "SatsGuard Guardian API" }));
+});
+
+server.listen(port, () => {
+  console.log(`[SatsGuard] Guardian API running on port ${port}`);
+  console.log(`[SatsGuard] WebSocket available at ws://localhost:${port}/ws`);
+  console.log(`[SatsGuard] Network: ${process.env.BITCOIN_NETWORK || "signet"}`);
+});
