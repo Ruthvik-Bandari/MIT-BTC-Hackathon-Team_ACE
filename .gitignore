@@ -20,6 +20,9 @@ next-env.d.ts
 # ── Bun ──────────────────────────────────────────────────────────
 bun.lockb
 
+# ── Local tools (Cogcoin binaries + node_modules) ───────────────
+tools/
+
 # ── OS files ─────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db

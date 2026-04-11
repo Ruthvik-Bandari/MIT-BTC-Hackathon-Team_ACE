@@ -127,23 +127,53 @@ Guardian: Found 3 addresses with exposed public keys:
 git clone https://github.com/Ruthvik-Bandari/MIT-BTC-Hackathon-Team_ACE.git
 cd MIT-BTC-Hackathon-Team_ACE
 
+# Install all workspace dependencies
+bun install
+
 # Environment
 cp .env.example .env
-# Fill in: ANTHROPIC_API_KEY, ALBY_NWC_URL
+# Fill in your API keys:
+#   ANTHROPIC_API_KEY  — Claude AI (required)
+#   ALBY_NWC_URL       — Alby Lightning wallet (required)
+#   NUNCHUK_API_KEY    — Nunchuk wallet management (required)
+#   COGCOIN_API_KEY    — Cogcoin on-chain anchoring (optional)
 
-# Backend
-cd apps/guardian-api
-bun install
-bun run dev          # http://localhost:3001
+# Symlink .env into sub-apps so Bun picks it up
+ln -sf ../../.env apps/guardian-api/.env
+ln -sf ../../.env apps/dashboard/.env
 
-# Frontend (separate terminal)
-cd apps/dashboard
-bun install
-bun run dev          # http://localhost:3000
+# Start both services (two terminals)
+cd apps/guardian-api && bun run dev   # http://localhost:3001
+cd apps/dashboard   && bun run dev   # http://localhost:3000
+
+# Or start everything from the root
+bun run dev
+
+# Verify services are connected
+curl http://localhost:3001/api/health
+# → { "services": { "nunchuk": true, "alby": true, "claude": true } }
 
 # Test guardian AI (with backend running)
 bun scripts/test-guardian.ts
 bun scripts/seed-demo.ts
+```
+
+### Cogcoin Setup (Optional)
+
+SatsGuard can anchor guardian actions on-chain via Cogcoin OP_RETURN transactions.
+
+```bash
+# Install Cogcoin CLI
+cd tools/cogcoin && bun install
+
+# Initialize wallet and repair if needed
+npx cogcoin init
+npx cogcoin repair --yes
+
+# Note: if bitcoind fails with "Not enough file descriptors",
+# increase the limit before running:
+ulimit -n 10240
+npx cogcoin repair --yes
 ```
 
 ## API Endpoints

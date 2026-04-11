@@ -8,5 +8,9 @@
     "build": "bun run --filter '*' build",
     "typecheck": "bun run --filter '*' typecheck",
     "lint": "bunx oxlint ."
+  },
+  "dependencies": {
+    "@cogcoin/indexer": "cogcoin/indexer",
+    "cogcoin": "^0.0.1"
   }
 }
