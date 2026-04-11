@@ -6,26 +6,24 @@
  * - New transactions are detected on watched addresses
  * - Risk level changes due to on-chain activity
  *
- * Uses mempool.space polling (no persistent WebSocket to mempool).
- * Broadcasts alerts to all connected WebSocket clients.
+ * Uses mempool.space polling. Broadcasts alerts via Bun native WebSocket
+ * through the broadcast() function exported from index.ts.
  */
 
-import type { WebSocketServer, WebSocket } from "ws";
 import type { WatchedAddress } from "../types/quantum.js";
 import { getAddressStats } from "./mempool.js";
 import { assessQuantumRisk } from "./quantum.js";
+import { broadcast } from "../index.js";
 
 const watchedAddresses = new Map<string, WatchedAddress>();
-let wss: WebSocketServer | null = null;
 let pollInterval: ReturnType<typeof setInterval> | null = null;
 
 const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
 /**
- * Initialize the monitor with a WebSocket server reference.
+ * Initialize the monitor and start polling.
  */
-export function initMonitor(webSocketServer: WebSocketServer): void {
-  wss = webSocketServer;
+export function initMonitor(): void {
   startPolling();
 }
 
@@ -66,25 +64,6 @@ export function getWatchedAddresses(): WatchedAddress[] {
 }
 
 /**
- * Broadcast a message to all connected WebSocket clients.
- */
-function broadcast(event: {
-  type: string;
-  address: string;
-  data: Record<string, unknown>;
-}): void {
-  if (!wss) return;
-
-  const message = JSON.stringify(event);
-
-  wss.clients.forEach((client: WebSocket) => {
-    if (client.readyState === 1) {
-      client.send(message);
-    }
-  });
-}
-
-/**
  * Poll all watched addresses for changes.
  */
 async function pollAddresses(): Promise<void> {
@@ -97,14 +76,12 @@ async function pollAddresses(): Promise<void> {
 
       // Detect new transactions
       if (currentTxCount > watched.lastTxCount && watched.lastTxCount > 0) {
-        broadcast({
+        broadcast("scanner:complete", {
           type: "scanner:tx_detected",
           address,
-          data: {
-            newTxCount: currentTxCount - watched.lastTxCount,
-            totalTxCount: currentTxCount,
-            timestamp: new Date().toISOString(),
-          },
+          newTxCount: currentTxCount - watched.lastTxCount,
+          totalTxCount: currentTxCount,
+          timestamp: new Date().toISOString(),
         });
       }
 
@@ -112,17 +89,15 @@ async function pollAddresses(): Promise<void> {
       if (hasSpent && !watched.publicKeyExposed) {
         const newAssessment = assessQuantumRisk(address, true);
 
-        broadcast({
+        broadcast("scanner:complete", {
           type: "scanner:risk_changed",
           address,
-          data: {
-            previousRisk: watched.riskLevel,
-            newRisk: newAssessment.riskLevel,
-            publicKeyExposed: true,
-            message: `PUBLIC KEY EXPOSED! Address ${address} was spent from. Risk elevated from ${watched.riskLevel} to ${newAssessment.riskLevel}.`,
-            recommendation: newAssessment.recommendation,
-            timestamp: new Date().toISOString(),
-          },
+          previousRisk: watched.riskLevel,
+          newRisk: newAssessment.riskLevel,
+          publicKeyExposed: true,
+          message: `PUBLIC KEY EXPOSED! Address ${address} was spent from. Risk elevated from ${watched.riskLevel} to ${newAssessment.riskLevel}.`,
+          recommendation: newAssessment.recommendation,
+          timestamp: new Date().toISOString(),
         });
 
         watched.riskLevel = newAssessment.riskLevel;

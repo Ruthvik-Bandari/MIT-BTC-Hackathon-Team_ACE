@@ -8,7 +8,9 @@ import { walletRoutes } from "./routes/wallet.js";
 import { lightningRoutes } from "./routes/lightning.js";
 import { guardianRoutes } from "./routes/guardian.js";
 import { scannerRoutes } from "./routes/scanner.js";
+import { cogcoinRoutes } from "./routes/cogcoin.js";
 import { errorHandler } from "./middleware/error.js";
+import { initCogcoin } from "./services/cogcoin.js";
 import type { WsMessage, WsEventType } from "./utils/types.js";
 
 // ── Hono app ─────────────────────────────────────────────────
@@ -32,6 +34,7 @@ app.route("/api/wallet", walletRoutes);
 app.route("/api/lightning", lightningRoutes);
 app.route("/api/guardian", guardianRoutes);
 app.route("/api/scanner", scannerRoutes);
+app.route("/api/cogcoin", cogcoinRoutes);
 
 // ── Bun native HTTP + WebSocket server ──────────────────────────
 
@@ -82,10 +85,19 @@ export function broadcast(type: WsEventType, payload: unknown): void {
   }
 }
 
+// ── Cogcoin init (non-blocking) ────────────────────────────────
+initCogcoin()
+  .then(() => console.log("[startup] Cogcoin identity registered"))
+  .catch((e: unknown) => {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.warn(`[startup] Cogcoin init skipped: ${msg}`);
+  });
+
 console.log(`
   ⚡ SatsGuard Guardian API (Hono + Bun)
-  ├─ HTTP  → http://localhost:${server.port}
-  ├─ WS    → ws://localhost:${server.port}/ws
-  ├─ Health → http://localhost:${server.port}/api/health
+  ├─ HTTP    → http://localhost:${server.port}
+  ├─ WS      → ws://localhost:${server.port}/ws
+  ├─ Health  → http://localhost:${server.port}/api/health
+  ├─ Cogcoin → http://localhost:${server.port}/api/cogcoin/anchor
   └─ Network: ${process.env.BITCOIN_NETWORK ?? "signet"}
 `);

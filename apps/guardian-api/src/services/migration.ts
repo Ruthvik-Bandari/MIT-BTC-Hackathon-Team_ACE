@@ -16,7 +16,7 @@ import type {
   RiskLevel,
   MigrationPlan,
 } from "../types/quantum.js";
-import { detectAddressType } from "./quantum.js";
+import { detectAddressType, isPublicKeyExposed } from "./quantum.js";
 import { getFullAddressInfo } from "./mempool.js";
 
 /**
@@ -198,8 +198,7 @@ export async function buildMigrationPlanWithLookup(
     // Mempool lookup failed — proceed without on-chain data
   }
 
-  const { isPublicKeyExposed: exposed } = await import("./quantum.js");
-  const publicKeyExposed = exposed(addressType, hasSpent);
+  const publicKeyExposed = isPublicKeyExposed(addressType, hasSpent);
 
   // Determine risk level from address type and exposure
   let riskLevel: RiskLevel;
