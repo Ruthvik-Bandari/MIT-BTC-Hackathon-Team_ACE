@@ -9,6 +9,7 @@ import { lightningRoutes } from "./routes/lightning.js";
 import { guardianRoutes } from "./routes/guardian.js";
 import { scannerRoutes } from "./routes/scanner.js";
 import { cogcoinRoutes } from "./routes/cogcoin.js";
+import { resilienceRoutes } from "./routes/resilience.js";
 import { errorHandler } from "./middleware/error.js";
 import { initCogcoin } from "./services/cogcoin.js";
 import type { WsMessage, WsEventType } from "./utils/types.js";
@@ -35,6 +36,7 @@ app.route("/api/lightning", lightningRoutes);
 app.route("/api/guardian", guardianRoutes);
 app.route("/api/scanner", scannerRoutes);
 app.route("/api/cogcoin", cogcoinRoutes);
+app.route("/api/resilience", resilienceRoutes);
 
 // ── Bun native HTTP + WebSocket server ──────────────────────────
 
