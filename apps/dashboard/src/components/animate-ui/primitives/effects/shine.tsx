@@ -259,7 +259,7 @@ const Shine = ({
 
   return (
     <div
-      style={{ position: 'relative', overflow: 'hidden', ...style }}
+      style={{ position: 'relative', overflow: 'hidden', borderRadius: 'inherit', ...style }}
       {...props}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

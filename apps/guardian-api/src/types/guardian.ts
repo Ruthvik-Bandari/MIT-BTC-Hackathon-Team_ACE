@@ -52,7 +52,7 @@ export const GuardianResponseSchema = z.object({
     "DENY_TRANSACTION",
     "CHAT",
   ]),
-  params: z.record(z.unknown()).default({}),
+  params: z.record(z.string(), z.unknown()).default({}),
   message: z.string(),
   warnings: z.array(z.string()).default([]),
 });

@@ -18,17 +18,17 @@ export function MessageBubble({ role, content, timestamp }: MessageBubbleProps) 
       <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
         <div
           className={cn(
-            "max-w-[80%] rounded-2xl px-4 py-2.5 text-sm",
+            "max-w-[80%] rounded-2xl px-4 py-2.5 text-[13px] leading-relaxed",
             isUser
-              ? "bg-primary text-primary-foreground"
-              : "bg-muted text-foreground"
+              ? "bg-foreground/90 text-background"
+              : "bg-muted/60 text-foreground/85 ring-1 ring-border/30"
           )}
         >
           <p className="whitespace-pre-wrap">{content}</p>
           <p
             className={cn(
-              "mt-1 text-xs",
-              isUser ? "text-primary-foreground/60" : "text-muted-foreground"
+              "mt-1.5 text-[10px]",
+              isUser ? "text-background/40" : "text-muted-foreground/50"
             )}
           >
             {formatRelativeTime(timestamp)}

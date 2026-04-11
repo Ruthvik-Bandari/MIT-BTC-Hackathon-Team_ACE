@@ -12,18 +12,18 @@ import { Fade } from "@/components/animate-ui/primitives/effects/fade";
 
 export default function GuardianPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
+    <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
         <Slide direction="left">
           <ErrorBoundary fallbackTitle="Guardian chat failed to load">
-            <Card className="min-h-150">
+            <Card className="min-h-150 p-0">
               <GuardianChat />
             </Card>
           </ErrorBoundary>
         </Slide>
 
         <Fade inView inViewOnce>
-          <div className="space-y-6">
+          <div className="space-y-5">
             <ErrorBoundary fallbackTitle="Wallet overview failed">
               <WalletOverview />
             </ErrorBoundary>

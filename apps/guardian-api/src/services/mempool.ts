@@ -2,14 +2,12 @@
  * Mempool.space API Integration
  *
  * Auto-detects whether a Bitcoin address has been spent from by querying
- * the mempool.space signet API. This eliminates the need for callers to
- * manually pass the `spent` flag — the scanner becomes a one-input tool.
+ * the mempool.space signet API. Uses native fetch (backend doesn't need xior).
  *
  * API: https://mempool.space/signet/api/
  * No authentication required (public API).
  */
 
-import xior from "xior";
 import type {
   MempoolAddressStats,
   MempoolUtxo,
@@ -18,50 +16,33 @@ import type {
 const MEMPOOL_BASE =
   process.env["MEMPOOL_API_URL"] ?? "https://mempool.space/signet/api";
 
-const mempoolClient = xior.create({
-  baseURL: MEMPOOL_BASE,
-  timeout: 10_000,
-});
+async function mempoolGet<T>(path: string): Promise<T> {
+  const res = await fetch(`${MEMPOOL_BASE}${path}`, {
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) {
+    throw new Error(`Mempool API error: ${res.status} ${res.statusText}`);
+  }
+  return res.json() as Promise<T>;
+}
 
-/**
- * Fetch address statistics from mempool.space.
- * Returns funded/spent txo counts to determine if address has been spent from.
- */
 export async function getAddressStats(
   address: string
 ): Promise<MempoolAddressStats> {
-  const { data } = await mempoolClient.get<MempoolAddressStats>(
-    `/address/${address}`
-  );
-  return data;
+  return mempoolGet<MempoolAddressStats>(`/address/${address}`);
 }
 
-/**
- * Fetch UTXOs for an address from mempool.space.
- */
 export async function getAddressUtxos(
   address: string
 ): Promise<MempoolUtxo[]> {
-  const { data } = await mempoolClient.get<MempoolUtxo[]>(
-    `/address/${address}/utxo`
-  );
-  return data;
+  return mempoolGet<MempoolUtxo[]>(`/address/${address}/utxo`);
 }
 
-/**
- * Auto-detect whether an address has been spent from.
- *
- * An address has been spent from if its spent_txo_count > 0.
- * This means the public key was revealed in a transaction input.
- */
 export async function hasBeenSpentFrom(address: string): Promise<boolean> {
   const stats = await getAddressStats(address);
   return stats.chain_stats.spent_txo_count > 0;
 }
 
-/**
- * Get the balance (in sats) for an address.
- */
 export async function getAddressBalance(address: string): Promise<number> {
   const stats = await getAddressStats(address);
   const funded =
@@ -71,10 +52,6 @@ export async function getAddressBalance(address: string): Promise<number> {
   return funded - spent;
 }
 
-/**
- * Full on-chain lookup: stats + UTXOs in parallel.
- * Returns everything needed for an enhanced quantum assessment.
- */
 export async function getFullAddressInfo(address: string): Promise<{
   hasBeenSpentFrom: boolean;
   balanceSats: number;

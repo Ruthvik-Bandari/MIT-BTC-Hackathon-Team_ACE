@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import { Search, ScanLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
@@ -12,7 +12,6 @@ import { NetworkStats } from "@/components/scanner/NetworkStats";
 import { useScanAddress, useScanWallet } from "@/hooks/useQuantumScan";
 import { useWalletStore } from "@/stores/wallet.store";
 import { Slide } from "@/components/animate-ui/primitives/effects/slide";
-import { RippleButton } from "@/components/animate-ui/primitives/buttons/ripple";
 
 export default function ScannerPage() {
   const [address, setAddress] = useState("");
@@ -39,37 +38,43 @@ export default function ScannerPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6 space-y-6">
+    <div className="mx-auto max-w-7xl px-6 py-8 space-y-8">
       <Slide direction="down">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-          <div className="flex-1 space-y-1.5">
-            <label htmlFor="scan-address" className="text-sm font-medium text-foreground">
-              Scan Bitcoin Address
-            </label>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="flex-1">
             <Input
               id="scan-address"
-              placeholder="bc1q... / 1A1z... / 3J98..."
+              placeholder="Enter a Bitcoin address to scan... (bc1q... / tb1q... / 1A1z...)"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleScanAddress()}
+              className="h-10"
             />
           </div>
-          <div className="flex gap-2">
-            <RippleButton onClick={handleScanAddress} disabled={singleLoading}>
+          <div className="flex shrink-0 gap-2">
+            <Button
+              onClick={handleScanAddress}
+              disabled={singleLoading || !address.trim()}
+              size="lg"
+            >
               {singleLoading ? (
                 <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
               ) : (
                 <Search className="size-4" />
               )}
               Scan Address
-            </RippleButton>
+            </Button>
             {activeWallet && (
               <Button
-                variant="secondary"
+                variant="outline"
+                size="lg"
                 onClick={handleScanWallet}
                 disabled={walletScan.isPending}
               >
-                {walletScan.isPending && (
+                {walletScan.isPending ? (
                   <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                ) : (
+                  <ScanLine className="size-4" />
                 )}
                 Scan Wallet
               </Button>

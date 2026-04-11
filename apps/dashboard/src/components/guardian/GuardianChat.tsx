@@ -37,12 +37,12 @@ export function GuardianChat() {
 
   return (
     <div className="flex h-full flex-col">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 p-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 p-5">
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
             <TypingText
               text="Ask the guardian to manage your wallet, scan addresses, or send payments."
-              className="text-muted-foreground text-sm"
+              className="text-muted-foreground/60 text-[13px]"
             />
           </div>
         )}
@@ -55,8 +55,8 @@ export function GuardianChat() {
           </div>
         ))}
         {isLoading && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="size-2 animate-pulse rounded-full bg-orange-500" />
+          <div className="flex items-center gap-2.5 text-[13px] text-muted-foreground/60">
+            <span className="size-1.5 animate-pulse rounded-full bg-orange-400/80" />
             Guardian is thinking...
           </div>
         )}
@@ -64,7 +64,7 @@ export function GuardianChat() {
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex items-center gap-2 border-t border-border p-4"
+        className="flex items-center gap-2.5 border-t border-border/40 p-4"
       >
         <Input
           {...register("message")}
@@ -72,7 +72,7 @@ export function GuardianChat() {
           autoComplete="off"
           className="flex-1"
         />
-        <Button type="submit" size="icon" disabled={isLoading}>
+        <Button type="submit" size="icon" variant="ghost" disabled={isLoading}>
           <Send className="size-4" />
         </Button>
       </form>

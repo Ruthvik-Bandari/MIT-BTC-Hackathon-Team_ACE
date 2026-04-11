@@ -10,8 +10,6 @@ import type { CogcoinEventType } from "../types/guardian.js";
 
 export const cogcoinRoutes = new Hono();
 
-// ─── Request Schemas ────────────────────────────────────────────
-
 const AnchorRequestSchema = z.object({
   eventType: z.enum([
     "POLICY_CHANGE",
@@ -20,14 +18,10 @@ const AnchorRequestSchema = z.object({
     "TRANSACTION_DENIED",
     "IDENTITY_REGISTERED",
   ]),
-  data: z.record(z.unknown()),
+  data: z.record(z.string(), z.unknown()),
 });
 
-// ─── POST /api/cogcoin/anchor ───────────────────────────────────
-
-/**
- * Anchors a guardian event on the Bitcoin blockchain via Cogcoin OP_RETURN.
- */
+// POST /api/cogcoin/anchor
 cogcoinRoutes.post(
   "/anchor",
   zValidator("json", AnchorRequestSchema),
@@ -35,8 +29,11 @@ cogcoinRoutes.post(
     const identity = getRegisteredIdentity();
     if (!identity) {
       return c.json(
-        { success: false, error: "Cogcoin service not initialized." } as const,
-        503,
+        {
+          success: false,
+          error: "Cogcoin service not initialized. Identity registration pending.",
+        },
+        503
       );
     }
 
@@ -44,7 +41,7 @@ cogcoinRoutes.post(
 
     const result = await anchorGuardianEvent(
       eventType as CogcoinEventType,
-      data,
+      data
     );
 
     return c.json({
@@ -54,28 +51,29 @@ cogcoinRoutes.post(
         opReturnHex: result.opReturnHex,
         confirmed: result.confirmed,
         blockHeight: result.blockHeight,
-        identity: { id: identity.id, name: identity.name },
+        identity: {
+          id: identity.id,
+          name: identity.name,
+        },
       },
     });
-  },
+  }
 );
 
-// ─── GET /api/cogcoin/verify/:txId ──────────────────────────────
-
-/**
- * Verifies a previously anchored event on the Bitcoin blockchain.
- */
+// GET /api/cogcoin/verify/:txId
 cogcoinRoutes.get("/verify/:txId", async (c) => {
   const identity = getRegisteredIdentity();
   if (!identity) {
     return c.json(
-      { success: false, error: "Cogcoin service not initialized." } as const,
-      503,
+      {
+        success: false,
+        error: "Cogcoin service not initialized. Identity registration pending.",
+      },
+      503
     );
   }
 
   const txId = c.req.param("txId");
-
   const result = await verifyAnchoredEvent(txId);
 
   return c.json({
@@ -89,20 +87,22 @@ cogcoinRoutes.get("/verify/:txId", async (c) => {
   });
 });
 
-// ─── GET /api/cogcoin/identity ──────────────────────────────────
-
-/**
- * Returns the registered Cogcoin identity for SatsGuard.
- */
+// GET /api/cogcoin/identity
 cogcoinRoutes.get("/identity", (c) => {
   const identity = getRegisteredIdentity();
 
   if (!identity) {
     return c.json(
-      { success: false, error: "Cogcoin identity not registered yet." } as const,
-      503,
+      {
+        success: false,
+        error: "Cogcoin identity not registered yet.",
+      },
+      503
     );
   }
 
-  return c.json({ success: true, data: identity });
+  return c.json({
+    success: true,
+    data: identity,
+  });
 });
