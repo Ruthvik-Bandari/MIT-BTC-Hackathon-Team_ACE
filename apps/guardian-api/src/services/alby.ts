@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NWCClient } from "@getalby/sdk/nwc";
+import { NWCClient } from "@getalby/sdk";
 import type { LightningBalance, LightningPayment } from "../utils/types.js";
 
 // ── Validation schemas ──────────────────────────────────────────
@@ -9,7 +9,7 @@ export const PayInvoiceSchema = z.object({
   amount: z.number().positive().optional(),
 });
 
-// ── Alby NWC client via @getalby/sdk ────────────────────────────
+// ── Alby NWC client via @getalby/sdk v7 ────────────────────────
 
 const NWC_URL = process.env.ALBY_NWC_URL ?? "";
 
@@ -20,11 +20,26 @@ export class AlbyError extends Error {
   }
 }
 
+/**
+ * Parse NWC URL and construct client with explicit params.
+ * @getalby/sdk v7 requires walletPubkey, relayUrl, secret separately.
+ */
 function getNwcClient(): NWCClient {
   if (!NWC_URL) {
     throw new AlbyError("ALBY_NWC_URL not configured");
   }
-  return new NWCClient({ nostrWalletConnectUrl: NWC_URL });
+
+  try {
+    const url = new URL(NWC_URL);
+    const walletPubkey = url.hostname || url.pathname.replace("//", "");
+    const relayUrls = url.searchParams.getAll("relay");
+    if (relayUrls.length === 0) relayUrls.push("wss://relay.getalby.com");
+    const secret = url.searchParams.get("secret") ?? "";
+
+    return new NWCClient({ walletPubkey, relayUrls, secret });
+  } catch {
+    throw new AlbyError("Invalid ALBY_NWC_URL format");
+  }
 }
 
 // ── Service functions ───────────────────────────────────────────
