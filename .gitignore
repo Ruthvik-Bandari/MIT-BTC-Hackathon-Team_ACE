@@ -44,3 +44,11 @@ yarn-error.log*
 
 # Testing
 coverage/
+
+# Claude Code memory (local only)
+memory/
+
+# Legacy files (moved to proper locations)
+ci.yml
+env.example
+gitignore
