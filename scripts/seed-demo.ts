@@ -1,186 +1,159 @@
 /**
- * SatsGuard Demo Seed Script
+ * Demo seed script — populates the guardian API with sample data for demo/testing.
+ * Run: bun scripts/seed-demo.ts
  *
- * Pre-populates the guardian API with a realistic wallet context containing
- * addresses of mixed quantum risk levels. Used before the live demo to
- * ensure judges see meaningful data immediately.
- *
- * Run with: bun scripts/seed-demo.ts
+ * Creates a wallet with mixed-risk addresses so the scanner shows
+ * CRITICAL / HIGH / MEDIUM / LOW results during the live demo.
  */
 
-const API_URL = process.env["API_URL"] ?? "http://localhost:3001";
+const API = process.env.API_URL ?? "http://localhost:3001";
 
-/**
- * Demo wallet context with 5 addresses at varying quantum risk levels.
- * Uses signet addresses to ensure no real funds are ever at risk.
- */
-const DEMO_WALLET_CONTEXT = {
-  balanceSats: 1_500_000,
-  policy: {
-    dailyLimitSats: 100_000,
-    spentTodaySats: 0,
-    requireApprovalAboveSats: 50_000,
-    coSignerEnabled: true,
-  },
-  addresses: [
-    {
-      address: "04b0bd634234abbb1ba1e986e884185c61cf43e001f9137f23c2c409273eb16e6537a576782eba668a7ef8bd3b3cfb1edb7117ab65129b8a2e681f3c1e0908ef7b",
-      type: "P2PK" as const,
-      hasBeenSpent: true,
-      balanceSats: 500_000,
-      quantumRisk: "CRITICAL" as const,
-    },
-    {
-      address: "n1wgm6kkzMcNfAtJmes8YhpvtDzdNhDY5a",
-      type: "P2PKH" as const,
-      hasBeenSpent: true,
-      balanceSats: 250_000,
-      quantumRisk: "HIGH" as const,
-    },
-    {
-      address: "tb1p5cyxnuxmeuwuvkwfem96lqzszee2456jdluchavfklg0k5gg70hsrmq0hx",
-      type: "P2TR" as const,
-      hasBeenSpent: false,
-      balanceSats: 300_000,
-      quantumRisk: "MEDIUM" as const,
-    },
-    {
-      address: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
-      type: "P2WPKH" as const,
-      hasBeenSpent: false,
-      balanceSats: 350_000,
-      quantumRisk: "LOW" as const,
-    },
-    {
-      address: "tb1qrp33g0q5b5698ahp5jnf5yzjmgcem8tlc7us37",
-      type: "P2WPKH" as const,
-      hasBeenSpent: false,
-      balanceSats: 100_000,
-      quantumRisk: "SAFE" as const,
-    },
-  ],
-  pendingTransactions: [
-    {
-      txId: "demo_tx_001",
-      toAddress: "tb1qrp33g0q5b5698ahp5jnf5yzjmgcem8tlc7us37",
-      amountSats: 25_000,
-      createdAt: new Date().toISOString(),
-      status: "pending" as const,
-    },
-  ],
-  network: "signet" as const,
-};
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
 
-/**
- * Demo conversation flow that showcases all guardian capabilities.
- * Each step is designed to show a different feature to judges.
- */
-const DEMO_FLOW = [
+async function api<T>(
+  method: string,
+  path: string,
+  body?: Record<string, unknown>
+): Promise<T> {
+  const res = await fetch(`${API}${path}`, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const json = (await res.json()) as ApiResponse<T>;
+  if (!json.success) throw new Error(json.error ?? "API error");
+  return json.data;
+}
+
+// ── Demo addresses with known risk profiles ─────────────────────
+// These are real address formats on signet/testnet that demonstrate
+// each quantum risk level for the scanner.
+
+const demoAddresses = [
   {
-    step: 1,
-    label: "Check balance",
-    message: "What's my balance?",
+    label: "P2PKH (spent → HIGH risk)",
+    address: "n1C8nsmi4sc4hjBfGf56A1dnVMjxnYSQqk",
+    spent: true,
   },
   {
-    step: 2,
-    label: "Quantum scan",
-    message: "Scan my wallet for quantum vulnerabilities",
+    label: "P2PKH (unspent → LOW risk)",
+    address: "mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn",
+    spent: false,
   },
   {
-    step: 3,
-    label: "Set policy",
-    message: "Let my AI spend up to 100000 sats per day, but ask me first for anything over 50000",
+    label: "P2WPKH (spent → HIGH risk)",
+    address: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx",
+    spent: true,
   },
   {
-    step: 4,
-    label: "Send to safe address",
-    message: "Send 15000 sats to tb1qrp33g0q5b5698ahp5jnf5yzjmgcem8tlc7us37",
+    label: "P2WPKH (unspent → LOW risk)",
+    address: "tb1qrp33g0q5b5698ahp5jnf0y5emnv573xahm9wr0",
+    spent: false,
   },
   {
-    step: 5,
-    label: "Send to risky address (should warn)",
-    message: "Send 5000 sats to n1wgm6kkzMcNfAtJmes8YhpvtDzdNhDY5a",
-  },
-  {
-    step: 6,
-    label: "Approve pending",
-    message: "Approve that pending transaction",
-  },
-  {
-    step: 7,
-    label: "General question",
-    message: "How many bitcoins are vulnerable to quantum attacks?",
+    label: "P2TR (Taproot → MEDIUM risk)",
+    address: "tb1p5cyxnuxmeuwuvkwfem96lqzszee2456rjnmhkhl3d",
+    spent: false,
   },
 ];
 
-async function runDemoStep(step: typeof DEMO_FLOW[number]): Promise<void> {
-  console.log(`\n--- Step ${step.step}: ${step.label} ---`);
-  console.log(`User: "${step.message}"`);
+async function seed() {
+  console.log("🌱 SatsGuard Demo Seed");
+  console.log(`   API: ${API}\n`);
 
-  const start = performance.now();
+  // 1. Health check
+  console.log("→ Checking API health...");
+  const health = await api<{ status: string }>("GET", "/api/health");
+  console.log(`  ✓ API status: ${health.status}\n`);
 
-  const res = await fetch(`${API_URL}/api/guardian/parse`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      userMessage: step.message,
-      walletContext: DEMO_WALLET_CONTEXT,
-    }),
-  });
+  // 2. Create demo wallet
+  console.log("→ Creating demo wallet...");
+  try {
+    const wallet = await api<{ id: string; name: string }>("POST", "/api/wallet/create", {
+      name: "SatsGuard Demo Wallet",
+      requiredApprovals: 2,
+    });
+    console.log(`  ✓ Wallet created: ${wallet.name} (${wallet.id})\n`);
 
-  const latency = Math.round(performance.now() - start);
-  const json = await res.json() as {
-    success: boolean;
-    data?: {
-      action: string;
-      params: Record<string, unknown>;
-      message: string;
-      warnings: string[];
-    };
-    error?: string;
-  };
-
-  if (!json.success || !json.data) {
-    console.log(`  ERROR: ${json.error ?? "Unknown"} (${latency}ms)`);
-    return;
+    // 3. Set policy
+    console.log("→ Setting spending policy...");
+    await api("POST", "/api/wallet/set-policy", {
+      walletId: wallet.id,
+      dailyLimit: 500_000,
+      perTransactionLimit: 100_000,
+      whitelistedAddresses: [],
+    });
+    console.log("  ✓ Policy: 500K sats/day, 100K sats/tx\n");
+  } catch (err) {
+    console.log(`  ⚠ Wallet creation skipped (Nunchuk CLI may not be available): ${(err as Error).message}\n`);
   }
 
-  console.log(`  Action:   ${json.data.action} (${latency}ms)`);
-  console.log(`  Guardian: ${json.data.message}`);
-
-  if (Object.keys(json.data.params).length > 0) {
-    console.log(`  Params:   ${JSON.stringify(json.data.params)}`);
-  }
-
-  if (json.data.warnings.length > 0) {
-    for (const w of json.data.warnings) {
-      console.log(`  WARNING:  ${w}`);
+  // 4. Scan demo addresses
+  console.log("→ Scanning demo addresses for quantum risk...\n");
+  for (const demo of demoAddresses) {
+    try {
+      const result = await api<{ assessment: { riskLevel: string; recommendation: string } }>(
+        "GET",
+        `/api/scanner/address/${demo.address}?spent=${demo.spent}`
+      );
+      const risk = result.assessment.riskLevel;
+      const icon =
+        risk === "CRITICAL" ? "🔴" :
+        risk === "HIGH" ? "🟠" :
+        risk === "MEDIUM" ? "🟡" : "🟢";
+      console.log(`  ${icon} ${demo.label}`);
+      console.log(`     ${demo.address}`);
+      console.log(`     Risk: ${risk} — ${result.assessment.recommendation}\n`);
+    } catch (err) {
+      console.log(`  ✗ Failed: ${demo.label} — ${(err as Error).message}\n`);
     }
   }
-}
 
-async function main(): Promise<void> {
-  console.log("=== SatsGuard Demo Seed & Walkthrough ===");
-  console.log(`API: ${API_URL}`);
-  console.log(`Wallet: ${DEMO_WALLET_CONTEXT.balanceSats.toLocaleString()} sats`);
-  console.log(`Addresses: ${DEMO_WALLET_CONTEXT.addresses.length} (mixed risk levels)`);
-
-  // Check health first
+  // 5. Batch scan
+  console.log("→ Running batch wallet scan...");
   try {
-    const health = await fetch(`${API_URL}/api/health`);
-    const healthJson = await health.json() as { status: string };
-    console.log(`Health: ${healthJson.status}`);
-  } catch {
-    console.error("ERROR: Cannot reach API at", API_URL);
-    console.error("Start the server first: cd apps/guardian-api && bun run dev");
-    process.exit(1);
+    const batchResult = await api<{
+      totalAddresses: number;
+      critical: number;
+      high: number;
+      medium: number;
+      low: number;
+    }>("POST", "/api/scanner/analyze", {
+      addresses: demoAddresses.map((d) => ({
+        address: d.address,
+        type: "UNKNOWN",
+        balance: 50_000,
+        spent: d.spent,
+      })),
+    });
+    console.log(`  ✓ Scanned ${batchResult.totalAddresses} addresses:`);
+    console.log(`    🔴 Critical: ${batchResult.critical}`);
+    console.log(`    🟠 High: ${batchResult.high}`);
+    console.log(`    🟡 Medium: ${batchResult.medium}`);
+    console.log(`    🟢 Low: ${batchResult.low}\n`);
+  } catch (err) {
+    console.log(`  ✗ Batch scan failed: ${(err as Error).message}\n`);
   }
 
-  for (const step of DEMO_FLOW) {
-    await runDemoStep(step);
-  }
+  // 6. Network stats
+  console.log("→ Fetching network vulnerability stats...");
+  const stats = await api<{
+    exposedBtc: number;
+    qubitsRequired: number;
+    estimatedBreakTime: string;
+  }>("GET", "/api/scanner/network-stats");
+  console.log(`  ✓ ${(stats.exposedBtc / 1_000_000).toFixed(1)}M BTC exposed`);
+  console.log(`  ✓ <${(stats.qubitsRequired / 1000).toFixed(0)}K qubits needed`);
+  console.log(`  ✓ Break time: ${stats.estimatedBreakTime}\n`);
 
-  console.log("\n=== Demo Complete ===");
+  console.log("✅ Demo seed complete! Ready for live demo.");
 }
 
-main().catch(console.error);
+seed().catch((err) => {
+  console.error("❌ Seed failed:", err);
+  process.exit(1);
+});

@@ -1,119 +1,91 @@
-import express from "express";
-import cors from "cors";
-import { WebSocketServer } from "ws";
-import { createServer } from "http";
-import { guardianRouter } from "./routes/guardian.js";
-import { cogcoinRouter } from "./routes/cogcoin.js";
-import { scannerRouter } from "./routes/scanner.js";
-import { initCogcoin, getRegisteredIdentity } from "./services/cogcoin.js";
-import { initMonitor } from "./services/monitor.js";
-import {
-  rateLimiter,
-  securityHeaders,
-  errorHandler,
-} from "./middleware/security.js";
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import type { ServerWebSocket } from "bun";
 
-const app = express();
-const PORT = parseInt(process.env["PORT"] ?? "3001", 10);
+import { healthRoutes } from "./routes/health.js";
+import { walletRoutes } from "./routes/wallet.js";
+import { lightningRoutes } from "./routes/lightning.js";
+import { guardianRoutes } from "./routes/guardian.js";
+import { scannerRoutes } from "./routes/scanner.js";
+import { errorHandler } from "./middleware/error.js";
+import type { WsMessage, WsEventType } from "./utils/types.js";
 
-// ─── Middleware ──────────────────────────────────────────────────────────────
+// ── Hono app ─────────────────────────────────────────────────
 
-app.use(securityHeaders);
+const app = new Hono();
+const PORT = parseInt(process.env.PORT ?? "3001", 10);
 
-app.use(cors({
-  origin: process.env["CORS_ORIGIN"] ?? "http://localhost:3000",
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
+    credentials: true,
+  })
+);
+app.use(logger());
+app.onError(errorHandler);
 
-app.use(rateLimiter);
-app.use(express.json({ limit: "1mb" }));
+// ── Routes ──────────────────────────────────────────────────────
 
-// ─── Routes ─────────────────────────────────────────────────────────────────
+app.route("/api/health", healthRoutes);
+app.route("/api/wallet", walletRoutes);
+app.route("/api/lightning", lightningRoutes);
+app.route("/api/guardian", guardianRoutes);
+app.route("/api/scanner", scannerRoutes);
 
-app.use("/api/guardian", guardianRouter);
-app.use("/api/cogcoin", cogcoinRouter);
-app.use("/api/scanner", scannerRouter);
+// ── Bun native HTTP + WebSocket server ──────────────────────────
 
-/** Health check endpoint for uptime monitoring and deployment probes. */
-app.get("/api/health", (_req, res) => {
-  const identity = getRegisteredIdentity();
-  res.json({
-    status: "ok",
-    service: "satsguard-guardian-api",
-    network: process.env["BITCOIN_NETWORK"] ?? "signet",
+const clients = new Set<ServerWebSocket<unknown>>();
+
+const server = Bun.serve({
+  port: PORT,
+  fetch(req, server) {
+    const url = new URL(req.url);
+
+    // Upgrade WebSocket requests on /ws path
+    if (url.pathname === "/ws") {
+      const upgraded = server.upgrade(req);
+      if (upgraded) return undefined;
+      return new Response("WebSocket upgrade failed", { status: 400 });
+    }
+
+    // All other requests go through Hono
+    return app.fetch(req, server);
+  },
+  websocket: {
+    open(ws) {
+      clients.add(ws);
+      console.log(`[WS] Client connected (${clients.size} total)`);
+    },
+    close(ws) {
+      clients.delete(ws);
+      console.log(`[WS] Client disconnected (${clients.size} total)`);
+    },
+    message(_ws, _message) {
+      // Clients don't send messages in our protocol — server push only
+    },
+  },
+});
+
+// Broadcast helper — used by services to push real-time events
+export function broadcast(type: WsEventType, payload: unknown): void {
+  const message: WsMessage = {
+    type,
+    payload,
     timestamp: new Date().toISOString(),
-    cogcoin: identity ? { id: identity.id, name: identity.name } : null,
-    features: [
-      "quantum-scanner",
-      "auto-detect-spent",
-      "quantum-timeline",
-      "migration-planner",
-      "bip360-checker",
-      "utxo-monitor",
-      "guardian-ai",
-      "cogcoin",
-    ],
-  });
-});
+  };
 
-// ─── Placeholder routes for teammates ───────────────────────────────────────
+  const data = JSON.stringify(message);
 
-app.post("/api/wallet/create", (_req, res) => {
-  res.status(501).json({ error: "Not implemented yet — Om's task" });
-});
-
-// ─── Error Handler (must be after all routes) ──────────────────────────────
-
-app.use(errorHandler);
-
-// ─── HTTP Server + WebSocket ────────────────────────────────────────────────
-
-const server = createServer(app);
-const wss = new WebSocketServer({ server, path: "/ws" });
-
-wss.on("connection", (ws) => {
-  ws.send(JSON.stringify({
-    type: "connected",
-    message: "SatsGuard Guardian API",
-    features: ["scanner:risk_changed", "scanner:tx_detected"],
-  }));
-});
-
-// Initialize UTXO monitor with WebSocket server
-initMonitor(wss);
-
-// ─── Server Startup ─────────────────────────────────────────────────────────
-
-async function start(): Promise<void> {
-  // Initialize Cogcoin (non-blocking — server starts even if Cogcoin fails)
-  try {
-    await initCogcoin();
-    console.log("[startup] Cogcoin identity registered");
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.warn(`[startup] Cogcoin init skipped: ${message}`);
+  for (const client of clients) {
+    client.send(data);
   }
-
-  server.listen(PORT, () => {
-    console.log(`[startup] SatsGuard Guardian API running on http://localhost:${PORT}`);
-    console.log(`[startup] WebSocket available at ws://localhost:${PORT}/ws`);
-    console.log(`[startup] Health:   http://localhost:${PORT}/api/health`);
-    console.log(`[startup] Guardian: POST http://localhost:${PORT}/api/guardian/parse`);
-    console.log(`[startup] Stream:   POST http://localhost:${PORT}/api/guardian/stream`);
-    console.log(`[startup] Cogcoin:  POST http://localhost:${PORT}/api/cogcoin/anchor`);
-    console.log(`[startup] Scanner endpoints:`);
-    console.log(`  GET  /api/scanner/address/:addr/full     — comprehensive scan`);
-    console.log(`  GET  /api/scanner/address/:addr/auto     — auto-detect scan`);
-    console.log(`  GET  /api/scanner/address/:addr/migrate  — migration plan`);
-    console.log(`  GET  /api/scanner/address/:addr/bip360   — BIP-360 check`);
-    console.log(`  GET  /api/scanner/timeline               — quantum timeline`);
-    console.log(`  POST /api/scanner/monitor/watch          — watch address`);
-  });
 }
 
-start().catch((error: unknown) => {
-  console.error("[startup] Fatal error:", error);
-  process.exit(1);
-});
-
-export { app };
+console.log(`
+  ⚡ SatsGuard Guardian API (Hono + Bun)
+  ├─ HTTP  → http://localhost:${server.port}
+  ├─ WS    → ws://localhost:${server.port}/ws
+  ├─ Health → http://localhost:${server.port}/api/health
+  └─ Network: ${process.env.BITCOIN_NETWORK ?? "signet"}
+`);

@@ -1,19 +1,43 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
+import { QueryProvider } from "@/providers/QueryProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
+import { WebSocketProvider } from "@/providers/WebSocketProvider";
+import { HotkeysProvider } from "@/providers/HotkeysProvider";
+import { Navbar } from "@/components/ui/navbar";
+import "./globals.css";
+import { Geist } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "SatsGuard — AI Bitcoin Guardian",
-  description: "AI-powered Bitcoin guardian with quantum defense. Protect your sats from quantum threats.",
+  title: "SatsGuard — AI-Powered Bitcoin Guardian",
+  description:
+    "Quantum-resistant Bitcoin wallet guardian with AI-powered transaction management and real-time risk assessment.",
+  openGraph: {
+    title: "SatsGuard",
+    description: "AI-Powered Bitcoin Guardian with Quantum Defense",
+    images: ["/og-image.png"],
+  },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-gray-950 text-gray-100 min-h-screen">
-        {children}
+    <html lang="en" className={cn("dark", geist.variable)}>
+      <body className="min-h-screen bg-background text-foreground antialiased">
+        <QueryProvider>
+          <ThemeProvider>
+            <WebSocketProvider>
+              <HotkeysProvider>
+                <div className="flex min-h-screen flex-col">
+                  <Navbar />
+                  <main className="flex-1">{children}</main>
+                </div>
+              </HotkeysProvider>
+            </WebSocketProvider>
+          </ThemeProvider>
+        </QueryProvider>
       </body>
     </html>
   );

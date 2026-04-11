@@ -1,0 +1,151 @@
+// Shared frontend types — mirrors backend types for API contract
+
+// ── Quantum Risk ────────────────────────────────────────────────
+
+export type RiskLevel = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+
+export type AddressType =
+  | "P2PK"
+  | "P2PKH"
+  | "P2WPKH"
+  | "P2TR"
+  | "P2SH"
+  | "P2WSH"
+  | "UNKNOWN";
+
+export interface QuantumRiskAssessment {
+  address: string;
+  addressType: AddressType;
+  riskLevel: RiskLevel;
+  publicKeyExposed: boolean;
+  hasBeenSpent: boolean;
+  recommendation: string;
+  estimatedAttackTime: string;
+}
+
+export interface WalletScanResult {
+  totalAddresses: number;
+  critical: number;
+  high: number;
+  medium: number;
+  low: number;
+  assessments: QuantumRiskAssessment[];
+}
+
+export interface NetworkStats {
+  exposedBtc: number;
+  p2pkOutputs: number;
+  totalVulnerable: number;
+  qubitsRequired: number;
+  estimatedBreakTime: string;
+}
+
+// ── Wallet ──────────────────────────────────────────────────────
+
+export interface WalletInfo {
+  id: string;
+  name: string;
+  balance: number;
+  policy: WalletPolicy;
+  addresses: WalletAddress[];
+}
+
+export interface WalletAddress {
+  address: string;
+  type: AddressType;
+  balance: number;
+  spent: boolean;
+}
+
+export interface WalletPolicy {
+  dailyLimit: number;
+  perTransactionLimit: number;
+  requiredApprovals: number;
+  whitelistedAddresses: string[];
+}
+
+export interface Transaction {
+  id: string;
+  walletId: string;
+  amount: number;
+  fee: number;
+  toAddress: string;
+  status: TransactionStatus;
+  createdAt: string;
+  confirmedAt?: string;
+}
+
+export type TransactionStatus =
+  | "pending"
+  | "approved"
+  | "denied"
+  | "executed"
+  | "failed";
+
+// ── Guardian ────────────────────────────────────────────────────
+
+export type GuardianIntent =
+  | "send"
+  | "check_balance"
+  | "set_policy"
+  | "scan_address"
+  | "scan_wallet"
+  | "pay_lightning"
+  | "explain_risk"
+  | "unknown";
+
+export interface GuardianParseResult {
+  intent: GuardianIntent;
+  confidence: number;
+  parameters: Record<string, string>;
+  explanation: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: "user" | "guardian";
+  content: string;
+  intent?: GuardianIntent;
+  timestamp: string;
+}
+
+// ── Lightning ───────────────────────────────────────────────────
+
+export interface LightningPayment {
+  invoice: string;
+  amount: number;
+  description: string;
+  status: "pending" | "settled" | "failed";
+  preimage?: string;
+  settledAt?: string;
+}
+
+export interface LightningBalance {
+  balance: number;
+  currency: string;
+}
+
+// ── WebSocket ───────────────────────────────────────────────────
+
+export type WsEventType =
+  | "transaction:pending"
+  | "transaction:approved"
+  | "transaction:executed"
+  | "transaction:denied"
+  | "guardian:response"
+  | "scanner:complete"
+  | "lightning:settled";
+
+export interface WsMessage {
+  type: WsEventType;
+  payload: unknown;
+  timestamp: string;
+}
+
+// ── API ─────────────────────────────────────────────────────────
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
