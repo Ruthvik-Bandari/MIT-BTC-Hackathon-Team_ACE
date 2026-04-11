@@ -1,0 +1,37 @@
+# Fly.io deployment config for SatsGuard Guardian API
+# Deploy: fly launch --config apps/guardian-api/fly.toml
+
+app = "satsguard-api"
+primary_region = "bos"  # Boston — closest to MIT
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "3001"
+  NODE_ENV = "production"
+  BITCOIN_NETWORK = "signet"
+  MEMPOOL_API_URL = "https://mempool.space/signet/api"
+
+[http_service]
+  internal_port = 3001
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 100
+    soft_limit = 80
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  path = "/api/health"
+  timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
