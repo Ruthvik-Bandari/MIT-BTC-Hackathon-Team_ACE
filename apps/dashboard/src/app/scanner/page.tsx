@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { Search, ScanLine, AlertCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,19 @@ import { NetworkStats } from "@/components/scanner/NetworkStats";
 import { useScanAddress, useScanWallet } from "@/hooks/useQuantumScan";
 import { useWalletStore } from "@/stores/wallet.store";
 import { Slide } from "@/components/animate-ui/primitives/effects/slide";
+
+// Lazy-load the 3D visualizer (heavy Three.js bundle)
+const QuantumVisualizer = dynamic(
+  () => import("@/components/scanner/QuantumVisualizer").then((m) => ({ default: m.QuantumVisualizer })),
+  { ssr: false, loading: () => (
+    <div className="w-full h-[380px] rounded-2xl border border-border bg-muted/20 flex items-center justify-center">
+      <div className="text-center">
+        <div className="size-8 mx-auto animate-spin rounded-full border-2 border-muted-foreground/30 border-t-blue-500" />
+        <p className="mt-3 text-xs text-muted-foreground">Loading 3D visualization...</p>
+      </div>
+    </div>
+  )}
+);
 
 export default function ScannerPage() {
   const [address, setAddress] = useState("");
@@ -40,6 +54,17 @@ export default function ScannerPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8 space-y-8">
+      {/* 3D Quantum Attack Visualizer */}
+      <ErrorBoundary fallbackTitle="3D visualization failed to load">
+        <Suspense fallback={
+          <div className="w-full h-[380px] rounded-2xl border border-border bg-muted/20 flex items-center justify-center">
+            <p className="text-xs text-muted-foreground">Loading 3D visualization...</p>
+          </div>
+        }>
+          <QuantumVisualizer />
+        </Suspense>
+      </ErrorBoundary>
+
       <Slide direction="down">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex-1">
