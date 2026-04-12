@@ -5,7 +5,14 @@ import type { LightningBalance, LightningPayment } from "../utils/types.js";
 // ── Validation schemas ──────────────────────────────────────────
 
 export const PayInvoiceSchema = z.object({
-  invoice: z.string().min(1),
+  invoice: z
+    .string()
+    .min(1)
+    .transform((v) => v.trim().replace(/\s+/g, ""))
+    .refine(
+      (v) => /^ln(bc|tb|tbs|bcrt)/i.test(v),
+      "Invalid Lightning invoice — must start with lnbc, lntb, lntbs, or lnbcrt",
+    ),
   amount: z.number().positive().optional(),
 });
 

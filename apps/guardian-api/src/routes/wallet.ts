@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
 import {
   createWallet,
@@ -14,6 +15,8 @@ import {
 } from "../services/nunchuk.js";
 import { broadcast } from "../index.js";
 import type { ApiResponse, WalletInfo, WalletPolicy, Transaction } from "../utils/types.js";
+
+const WalletIdParam = z.string().min(1).max(64).regex(/^[a-zA-Z0-9_-]+$/);
 
 export const walletRoutes = new Hono();
 
@@ -66,6 +69,9 @@ walletRoutes.post(
 // POST /api/wallet/approve/:txId
 walletRoutes.post("/approve/:txId", async (c) => {
   const txId = c.req.param("txId");
+  if (!/^[a-zA-Z0-9_-]{1,128}$/.test(txId)) {
+    return c.json({ success: false, error: "Invalid transaction ID" }, 400);
+  }
   const tx = await approveTransaction(txId);
   broadcast("transaction:approved", tx);
 
@@ -76,6 +82,9 @@ walletRoutes.post("/approve/:txId", async (c) => {
 // POST /api/wallet/deny/:txId
 walletRoutes.post("/deny/:txId", async (c) => {
   const txId = c.req.param("txId");
+  if (!/^[a-zA-Z0-9_-]{1,128}$/.test(txId)) {
+    return c.json({ success: false, error: "Invalid transaction ID" }, 400);
+  }
   const tx = await denyTransaction(txId);
   broadcast("transaction:denied", tx);
 
@@ -86,14 +95,15 @@ walletRoutes.post("/deny/:txId", async (c) => {
 // GET /api/wallet/balance
 walletRoutes.get("/balance", async (c) => {
   const walletId = c.req.query("walletId");
-  if (!walletId) {
-    return c.json({ success: false, error: "walletId query param required" }, 400);
+  const parsed = WalletIdParam.safeParse(walletId);
+  if (!parsed.success) {
+    return c.json({ success: false, error: "Valid walletId query param required" }, 400);
   }
 
-  const balance = await getBalance(walletId);
+  const balance = await getBalance(parsed.data);
   const response: ApiResponse<{ balance: number; walletId: string }> = {
     success: true,
-    data: { balance, walletId },
+    data: { balance, walletId: parsed.data },
   };
   return c.json(response);
 });
@@ -101,11 +111,12 @@ walletRoutes.get("/balance", async (c) => {
 // GET /api/wallet/transactions
 walletRoutes.get("/transactions", async (c) => {
   const walletId = c.req.query("walletId");
-  if (!walletId) {
-    return c.json({ success: false, error: "walletId query param required" }, 400);
+  const parsed = WalletIdParam.safeParse(walletId);
+  if (!parsed.success) {
+    return c.json({ success: false, error: "Valid walletId query param required" }, 400);
   }
 
-  const transactions = await getTransactions(walletId);
+  const transactions = await getTransactions(parsed.data);
   const response: ApiResponse<Transaction[]> = {
     success: true,
     data: transactions,

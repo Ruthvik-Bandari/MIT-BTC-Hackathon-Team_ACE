@@ -46,13 +46,15 @@ async function execNunchuk(args: string[]): Promise<string> {
 
   if (exitCode !== 0) {
     const errMsg = stderr.trim() || stdout.trim();
-    // Try to parse JSON error from CLI
+    // Log full error internally, return sanitized message to client
+    console.error(`[nunchuk] CLI error (exit ${exitCode}): ${errMsg}`);
     try {
       const errJson = JSON.parse(errMsg);
-      throw new NunchukError(errJson.message ?? errJson.error ?? errMsg, exitCode);
+      const detail = errJson.message ?? errJson.error ?? "Wallet operation failed";
+      throw new NunchukError(detail, exitCode);
     } catch (e) {
       if (e instanceof NunchukError) throw e;
-      throw new NunchukError(errMsg || `CLI exited with code ${exitCode}`, exitCode);
+      throw new NunchukError("Wallet operation failed", exitCode);
     }
   }
 

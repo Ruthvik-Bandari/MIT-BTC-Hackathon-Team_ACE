@@ -74,6 +74,9 @@ cogcoinRoutes.get("/verify/:txId", async (c) => {
   }
 
   const txId = c.req.param("txId");
+  if (!/^[a-f0-9]{64}$/.test(txId)) {
+    return c.json({ success: false, error: "Invalid transaction ID format" }, 400);
+  }
   const result = await verifyAnchoredEvent(txId);
 
   return c.json({

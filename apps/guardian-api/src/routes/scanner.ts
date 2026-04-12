@@ -38,6 +38,12 @@ scannerRoutes.post(
 // Auto-detects spent status from mempool.space if not explicitly provided
 scannerRoutes.get("/address/:addr", async (c) => {
   const addr = c.req.param("addr");
+
+  // Validate address format to prevent URL injection
+  if (!/^[a-zA-Z0-9]{20,90}$/.test(addr)) {
+    return c.json({ success: false, error: "Invalid Bitcoin address format" }, 400);
+  }
+
   const spentParam = c.req.query("spent");
 
   let spent: boolean;

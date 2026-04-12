@@ -12,6 +12,7 @@ import { cogcoinRoutes } from "./routes/cogcoin.js";
 import { resilienceRoutes } from "./routes/resilience.js";
 import { webhookRoutes } from "./routes/webhook.js";
 import { errorHandler } from "./middleware/error.js";
+import { securityHeaders, rateLimiter } from "./middleware/security.js";
 import { initCogcoin } from "./services/cogcoin.js";
 import type { WsMessage, WsEventType } from "./utils/types.js";
 
@@ -34,6 +35,8 @@ app.use(
   })
 );
 app.use(logger());
+app.use(securityHeaders);
+app.use(rateLimiter);
 app.onError(errorHandler);
 
 // ── Routes ──────────────────────────────────────────────────────
