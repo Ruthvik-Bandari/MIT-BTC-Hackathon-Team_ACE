@@ -134,7 +134,10 @@ export type WsEventType =
   | "transaction:denied"
   | "guardian:response"
   | "scanner:complete"
-  | "lightning:settled";
+  | "lightning:settled"
+  | "webhook:transaction"
+  | "webhook:policy"
+  | "webhook:wallet";
 
 export interface WsMessage {
   type: WsEventType;

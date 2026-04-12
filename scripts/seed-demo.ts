@@ -62,7 +62,7 @@ const demoAddresses = [
 ];
 
 async function seed() {
-  console.log("🌱 SatsGuard Demo Seed");
+  console.log("🌱 BitShield Demo Seed");
   console.log(`   API: ${API}\n`);
 
   // 1. Health check
@@ -74,7 +74,7 @@ async function seed() {
   console.log("→ Creating demo wallet...");
   try {
     const wallet = await api<{ id: string; name: string }>("POST", "/api/wallet/create", {
-      name: "SatsGuard Demo Wallet",
+      name: "BitShield Demo Wallet",
       requiredApprovals: 2,
     });
     console.log(`  ✓ Wallet created: ${wallet.name} (${wallet.id})\n`);

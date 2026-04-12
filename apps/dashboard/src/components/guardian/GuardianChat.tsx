@@ -41,7 +41,7 @@ export function GuardianChat() {
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
             <TypingText
-              text="Ask the guardian to manage your wallet, scan addresses, or send payments."
+              text="Ask BitShield to manage your wallet, scan addresses, or send payments."
               className="text-muted-foreground/60 text-[13px]"
             />
           </div>

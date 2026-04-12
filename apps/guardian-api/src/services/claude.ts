@@ -12,15 +12,11 @@ export class ClaudeError extends Error {
   }
 }
 
-const SYSTEM_PROMPT = `You are SatsGuard, an AI Bitcoin guardian. Parse the user's message and determine their intent.
+const SYSTEM_PROMPT = `You are BitShield, an AI Bitcoin guardian. Parse the user's message and determine their intent.
 
-Respond with ONLY valid JSON in this exact format:
-{
-  "intent": "<one of: send, check_balance, set_policy, scan_address, scan_wallet, pay_lightning, explain_risk, unknown>",
-  "confidence": <number 0-1>,
-  "parameters": { <key-value pairs extracted from the message> },
-  "explanation": "<brief response to the user explaining what you understood and what action will be taken>"
-}
+You MUST respond with ONLY a valid JSON object — no markdown, no code fences, no extra text before or after. The JSON must match this exact schema:
+
+{"intent":"<one of: send, check_balance, set_policy, scan_address, scan_wallet, pay_lightning, explain_risk, unknown>","confidence":<number 0-1>,"parameters":{<key-value pairs extracted from the message>},"explanation":"<brief response to the user explaining what you understood and what action will be taken>"}
 
 Intent definitions:
 - send: User wants to send BTC to an address
@@ -33,7 +29,8 @@ Intent definitions:
 - unknown: Cannot determine intent
 
 Extract relevant parameters like addresses, amounts (in sats), invoice strings, policy values.
-Always respond in a helpful, security-conscious tone. This is signet/testnet only.`;
+Always respond in a helpful, security-conscious tone. This is signet/testnet only.
+CRITICAL: Output raw JSON only. No markdown. No \`\`\`json blocks. No explanatory text outside the JSON.`;
 
 export async function parseIntent(message: string): Promise<GuardianParseResult> {
   if (!ANTHROPIC_API_KEY) {
@@ -53,7 +50,13 @@ export async function parseIntent(message: string): Promise<GuardianParseResult>
   }
 
   try {
-    const parsed = JSON.parse(textBlock.text) as {
+    // Strip markdown code fences if Claude wraps the JSON
+    let rawText = textBlock.text.trim();
+    if (rawText.startsWith("```")) {
+      rawText = rawText.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+    }
+
+    const parsed = JSON.parse(rawText) as {
       intent: string;
       confidence: number;
       parameters: Record<string, string>;

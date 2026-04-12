@@ -1,5 +1,5 @@
 /**
- * Cogcoin integration service for SatsGuard.
+ * Cogcoin integration service for BitShield.
  *
  * Anchors guardian events (policy changes, quantum scan results, transaction
  * approvals/denials) on the Bitcoin blockchain via Cogcoin's OP_RETURN mechanism.
@@ -22,8 +22,8 @@ import type {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const SATSGUARD_IDENTITY_NAME = "SatsGuard-Guardian";
-const COGCOIN_PREFIX = "SATSGUARD";
+const SATSGUARD_IDENTITY_NAME = "BitShield-Guardian";
+const COGCOIN_PREFIX = "BITSHIELD";
 
 // ─── Client State ───────────────────────────────────────────────────────────
 

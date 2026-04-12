@@ -63,7 +63,7 @@ export default function DashboardPage() {
           <div className="mb-20 text-center">
             <h1 className="text-5xl font-bold tracking-[-0.03em]">
               <GradientText
-                text="SatsGuard"
+                text="BitShield"
                 gradient="linear-gradient(90deg, #f97316 0%, #eab308 35%, #f97316 65%, #ef4444 100%)"
               />
             </h1>

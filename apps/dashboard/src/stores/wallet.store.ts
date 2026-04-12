@@ -1,6 +1,25 @@
 import { create } from "zustand";
 import type { WalletInfo, Transaction } from "@/lib/types";
 
+// Default demo wallet so the UI always has data to display
+const DEMO_WALLET: WalletInfo = {
+  id: "twvucjgm",
+  name: "BitShield Demo Wallet",
+  balance: 350_000,
+  policy: {
+    dailyLimit: 500_000,
+    perTransactionLimit: 100_000,
+    requiredApprovals: 2,
+    whitelistedAddresses: [],
+  },
+  addresses: [
+    { address: "n1C8nsmi4sc4hjBfGf56A1dnVMjxnYSQqk", type: "P2PKH", balance: 120_000, spent: true },
+    { address: "tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx", type: "P2WPKH", balance: 80_000, spent: true },
+    { address: "tb1qrp33g0q5b5698ahp5jnf0y5emnv573xahm9wr0", type: "P2WPKH", balance: 100_000, spent: false },
+    { address: "mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn", type: "P2PKH", balance: 50_000, spent: false },
+  ],
+};
+
 interface WalletState {
   activeWallet: WalletInfo | null;
   pendingTransactions: Transaction[];
@@ -12,7 +31,7 @@ interface WalletState {
 }
 
 export const useWalletStore = create<WalletState>((set) => ({
-  activeWallet: null,
+  activeWallet: DEMO_WALLET,
   pendingTransactions: [],
 
   setActiveWallet: (activeWallet) => set({ activeWallet }),

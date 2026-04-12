@@ -13,7 +13,10 @@ export const sendTransactionSchema = z.object({
 export type SendTransactionInput = z.infer<typeof sendTransactionSchema>;
 
 export const payLightningSchema = z.object({
-  invoice: z.string().min(1, "Lightning invoice is required"),
+  invoice: z
+    .string()
+    .min(1, "Lightning invoice is required")
+    .transform((v) => v.trim().replace(/\s+/g, "")),
 });
 
 export type PayLightningInput = z.infer<typeof payLightningSchema>;

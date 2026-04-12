@@ -46,8 +46,9 @@ function getNwcClient(): NWCClient {
 
 export async function payInvoice(invoice: string): Promise<LightningPayment> {
   const nwc = getNwcClient();
+  const cleanInvoice = invoice.trim().replace(/\s+/g, "");
   try {
-    const result = await nwc.payInvoice({ invoice });
+    const result = await nwc.payInvoice({ invoice: cleanInvoice });
 
     return {
       invoice,

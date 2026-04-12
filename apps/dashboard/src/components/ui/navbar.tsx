@@ -26,7 +26,7 @@ export function Navbar() {
             <Shield className="size-3.5 text-orange-400" />
           </div>
           <span className="text-[15px] font-semibold tracking-[-0.01em] text-foreground/90">
-            SatsGuard
+            BitShield
           </span>
           <span className="rounded-full bg-muted/60 px-2 py-0.5 text-[10px] font-medium tracking-wider text-muted-foreground/60 uppercase ring-1 ring-border/50">
             signet

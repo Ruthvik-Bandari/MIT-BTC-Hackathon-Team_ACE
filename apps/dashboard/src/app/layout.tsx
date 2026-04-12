@@ -12,11 +12,11 @@ import { cn } from "@/lib/utils";
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "SatsGuard — AI-Powered Bitcoin Guardian",
+  title: "BitShield — AI-Powered Bitcoin Guardian",
   description:
     "Quantum-resistant Bitcoin wallet guardian with AI-powered transaction management and real-time risk assessment.",
   openGraph: {
-    title: "SatsGuard",
+    title: "BitShield",
     description: "AI-Powered Bitcoin Guardian with Quantum Defense",
     images: ["/og-image.png"],
   },

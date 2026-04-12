@@ -98,7 +98,7 @@ initCogcoin()
   });
 
 console.log(`
-  ⚡ SatsGuard Guardian API (Hono + Bun)
+  ⚡ BitShield Guardian API (Hono + Bun)
   ├─ HTTP    → http://localhost:${server.port}
   ├─ WS      → ws://localhost:${server.port}/ws
   ├─ Health  → http://localhost:${server.port}/api/health
