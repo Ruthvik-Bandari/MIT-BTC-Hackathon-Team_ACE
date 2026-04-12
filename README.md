@@ -1,4 +1,4 @@
-# SatsGuard
+# BitShield
 
 **AI-Powered Bitcoin Guardian with Quantum Defense**
 
@@ -24,9 +24,9 @@ On March 30, 2026, Google Quantum AI published a whitepaper showing that a crypt
 
 Most Bitcoin holders don't even know their addresses are vulnerable. There's no tool that scans a wallet and says "these 3 addresses need to migrate NOW."
 
-## What SatsGuard Does
+## What BitShield Does
 
-SatsGuard is a unified security dashboard that solves both problems:
+BitShield is a unified security dashboard that solves both problems:
 
 **Speak plain English. Your AI guardian handles the rest.**
 
@@ -135,7 +135,6 @@ cp .env.example .env
 # Fill in your API keys:
 #   ANTHROPIC_API_KEY  — Claude AI (required)
 #   ALBY_NWC_URL       — Alby Lightning wallet (required)
-#   NUNCHUK_API_KEY    — Nunchuk wallet management (required)
 #   COGCOIN_API_KEY    — Cogcoin on-chain anchoring (optional)
 
 # Symlink .env into sub-apps so Bun picks it up
@@ -160,7 +159,7 @@ bun scripts/seed-demo.ts
 
 ### Cogcoin Setup (Optional)
 
-SatsGuard can anchor guardian actions on-chain via Cogcoin OP_RETURN transactions.
+BitShield can anchor guardian actions on-chain via Cogcoin OP_RETURN transactions.
 
 ```bash
 # Install Cogcoin CLI
@@ -211,7 +210,7 @@ GET  /api/lightning/balance     # Lightning wallet balance
 ```
 POST /api/cogcoin/anchor        # Anchor guardian event via OP_RETURN
 GET  /api/cogcoin/verify/:txId  # Verify anchored event on-chain
-GET  /api/cogcoin/identity      # SatsGuard identity info
+GET  /api/cogcoin/identity      # BitShield identity info
 ```
 
 ### Nunchuk Webhook (Real-Time Events)
@@ -259,7 +258,7 @@ Based on [Google Quantum AI's March 2026 whitepaper](https://quantumai.google/st
 ## Monorepo Structure
 
 ```
-satsguard/
+bitshield/
 ├── package.json                                    # Workspace root
 ├── .env.example                                    # Environment template
 ├── .github/workflows/ci.yml                        # CI: lint + typecheck
@@ -421,7 +420,7 @@ satsguard/
 
 ## Sponsor Alignment
 
-| Sponsor | How SatsGuard Integrates |
+| Sponsor | How BitShield Integrates |
 |---------|------------------------|
 | **Nunchuk** | First product built on Agent Skills (released 48 hours before hackathon) |
 | **Cogcoin** | On-chain identity anchoring for guardian event audit trail |
