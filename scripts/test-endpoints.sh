@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ============================================================
-# SatsGuard — Endpoint Test Script
+# BitShield — Endpoint Test Script
 # Tests all API endpoints on deployed or local backend
 # Usage: ./scripts/test-endpoints.sh [API_URL]
 # ============================================================
@@ -18,7 +18,7 @@ PASS=0
 FAIL=0
 SKIP=0
 
-echo "=== SatsGuard Endpoint Tests ==="
+echo "=== BitShield Endpoint Tests ==="
 echo "Target: $API_URL"
 echo ""
 
@@ -103,7 +103,7 @@ echo ""
 echo -e "${BLUE}[CORS]${NC}"
 echo -n "  OPTIONS /api/health — CORS preflight: "
 CORS_HEADER=$(curl -sf -I -X OPTIONS "$API_URL/api/health" \
-  -H "Origin: https://satsguard.vercel.app" \
+  -H "Origin: https://bitshield.vercel.app" \
   -H "Access-Control-Request-Method: GET" 2>/dev/null | grep -i "access-control-allow" || echo "")
 if [ -n "$CORS_HEADER" ]; then
   echo -e "${GREEN}OK${NC}"

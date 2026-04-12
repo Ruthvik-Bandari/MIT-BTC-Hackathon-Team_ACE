@@ -64,7 +64,7 @@ export async function pinScanReport(report: {
   scannedAt: string;
 }): Promise<IpfsPin> {
   return pinJson({
-    type: "satsguard:scan_report",
+    type: "bitshield:scan_report",
     version: "1.0",
     ...report,
   });
@@ -79,7 +79,7 @@ export async function pinAuditEvent(event: {
   timestamp: string;
 }): Promise<IpfsPin> {
   return pinJson({
-    type: "satsguard:audit_trail",
+    type: "bitshield:audit_trail",
     version: "1.0",
     ...event,
   });

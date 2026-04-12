@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ============================================================
-# SatsGuard — Localhost Backup for Demo
+# BitShield — Localhost Backup for Demo
 # Starts both backend and frontend locally as fallback if
 # cloud deployment fails during the demo.
 # Usage: ./scripts/localhost-backup.sh
@@ -16,7 +16,7 @@ NC='\033[0m'
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-echo "=== SatsGuard Localhost Backup ==="
+echo "=== BitShield Localhost Backup ==="
 echo ""
 
 # Check .env exists

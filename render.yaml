@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: satsguard-api
+    name: bitshield-api
     runtime: docker
     dockerfilePath: ./apps/guardian-api/Dockerfile
     dockerContext: ./apps/guardian-api
@@ -24,4 +24,4 @@ services:
       - key: MEMPOOL_API_URL
         value: https://mempool.space/signet/api
       - key: CORS_ORIGIN
-        value: https://satsguard.vercel.app
+        value: https://bitshield.vercel.app

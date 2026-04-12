@@ -1,5 +1,5 @@
 /**
- * SatsGuard — Edge Case & Regression Test Suite
+ * BitShield — Edge Case & Regression Test Suite
  *
  * Tests corner cases for all 7 guardian intents to ensure robust
  * intent classification under ambiguous, adversarial, and unusual inputs.
@@ -191,7 +191,7 @@ const EDGE_CASES: EdgeCase[] = [
   },
   {
     name: "Chat: help request",
-    message: "What can SatsGuard do for me?",
+    message: "What can BitShield do for me?",
     wallet: WALLET,
     expectedAction: "CHAT",
     description: "Help request",
@@ -265,7 +265,7 @@ async function runEdgeCase(tc: EdgeCase): Promise<{
 }
 
 async function main(): Promise<void> {
-  console.log("=== SatsGuard Edge Case Test Suite ===\n");
+  console.log("=== BitShield Edge Case Test Suite ===\n");
   console.log(`Target: ${API_URL}`);
   console.log(`Cases:  ${EDGE_CASES.length}\n`);
 

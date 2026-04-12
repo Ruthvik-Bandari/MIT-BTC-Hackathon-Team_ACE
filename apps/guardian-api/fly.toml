@@ -1,7 +1,7 @@
-# Fly.io deployment config for SatsGuard Guardian API
+# Fly.io deployment config for BitShield Guardian API
 # Deploy: fly launch --config apps/guardian-api/fly.toml
 
-app = "satsguard-api"
+app = "bitshield-api"
 primary_region = "bos"  # Boston — closest to MIT
 
 [build]

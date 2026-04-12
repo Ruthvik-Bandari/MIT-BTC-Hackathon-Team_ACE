@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ============================================================
-# SatsGuard — Demo Seed Script
+# BitShield — Demo Seed Script
 # Pre-populates the backend with demo data for hackathon presentation
 # Run: chmod +x scripts/demo-seed.sh && ./scripts/demo-seed.sh
 # ============================================================
@@ -15,7 +15,7 @@ NC='\033[0m'
 
 API_URL="${SATSGUARD_API_URL:-http://localhost:3001}"
 
-echo "=== SatsGuard Demo Seed ==="
+echo "=== BitShield Demo Seed ==="
 echo "API: $API_URL"
 echo ""
 

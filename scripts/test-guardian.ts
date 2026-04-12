@@ -1,5 +1,5 @@
 /**
- * SatsGuard Guardian Test Harness
+ * BitShield Guardian Test Harness
  *
  * Tests all 7 guardian intents against the Claude API with a realistic
  * wallet context. Run with: bun scripts/test-guardian.ts
@@ -190,7 +190,7 @@ async function runViaAPI(testCase: typeof TEST_CASES[number]): Promise<TestResul
 }
 
 async function main(): Promise<void> {
-  console.log("=== SatsGuard Guardian Test Harness ===\n");
+  console.log("=== BitShield Guardian Test Harness ===\n");
   console.log(`Target: ${API_URL}`);
   console.log(`Tests:  ${TEST_CASES.length}`);
   console.log("");

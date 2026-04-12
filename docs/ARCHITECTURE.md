@@ -1,4 +1,4 @@
-# SatsGuard — Architecture
+# BitShield — Architecture
 
 ## System overview
 
@@ -94,7 +94,7 @@ Address input → detectAddressType() → assessQuantumRisk()
 
 ### Threat Model
 
-SatsGuard faces three threat categories:
+BitShield faces three threat categories:
 
 1. **Quantum Computing**: Shor's algorithm derives private keys from exposed public keys. Google whitepaper: <500K qubits breaks secp256k1 in ~9 minutes. 6.9M BTC exposed.
 2. **API Attacks**: Input injection, DoS, CORS bypass, information leakage.
@@ -183,7 +183,7 @@ main branch push → Vercel (dashboard auto-deploy)
 
 ### Environment isolation
 - **Development** — localhost:3000 (dashboard) + localhost:3001 (API)
-- **Production** — satsguard.vercel.app + satsguard-api.railway.app
+- **Production** — bitshield.vercel.app + bitshield-api.railway.app
 - **Bitcoin network** — Signet/testnet ONLY (never mainnet)
 
 ## Performance targets

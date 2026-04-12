@@ -3,7 +3,7 @@ import { createHash, randomBytes } from "crypto";
 // ── Nostr Event Propagation ────────────────────────────────────
 // Broadcasts guardian events over the Nostr network for
 // decentralized event propagation. Uses NIP-01 events with
-// custom kind for SatsGuard guardian actions.
+// custom kind for BitShield guardian actions.
 
 const NOSTR_RELAYS = [
   process.env.NOSTR_RELAY_1 ?? "wss://relay.getalby.com",
@@ -11,7 +11,7 @@ const NOSTR_RELAYS = [
   process.env.NOSTR_RELAY_3 ?? "wss://nos.lol",
 ];
 
-// SatsGuard custom Nostr event kind (30078 = parameterized replaceable)
+// BitShield custom Nostr event kind (30078 = parameterized replaceable)
 const SATSGUARD_EVENT_KIND = 30078;
 
 export interface NostrEvent {
@@ -49,7 +49,7 @@ function generateEventId(event: Omit<NostrEvent, "id" | "sig">): string {
 
 /**
  * Publish a guardian event to Nostr relays.
- * Events are tagged with the SatsGuard namespace for discoverability.
+ * Events are tagged with the BitShield namespace for discoverability.
  */
 export async function publishGuardianEvent(
   eventType: string,
@@ -60,7 +60,7 @@ export async function publishGuardianEvent(
   const pubkey = createHash("sha256").update(serverSeed).digest("hex");
 
   const content = JSON.stringify({
-    app: "satsguard",
+    app: "bitshield",
     version: "1.0",
     type: eventType,
     payload,
@@ -71,8 +71,8 @@ export async function publishGuardianEvent(
     created_at: Math.floor(Date.now() / 1000),
     kind: SATSGUARD_EVENT_KIND,
     tags: [
-      ["d", `satsguard:${eventType}`],
-      ["t", "satsguard"],
+      ["d", `bitshield:${eventType}`],
+      ["t", "bitshield"],
       ["t", "bitcoin-security"],
       ["t", "quantum-defense"],
       ["network", process.env.BITCOIN_NETWORK ?? "signet"],

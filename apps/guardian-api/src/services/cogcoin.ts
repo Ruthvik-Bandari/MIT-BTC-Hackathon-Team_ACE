@@ -46,7 +46,7 @@ class CogcoinClientAdapter {
   }
 
   /**
-   * Registers SatsGuard as a Cogcoin identity on the Bitcoin network.
+   * Registers BitShield as a Cogcoin identity on the Bitcoin network.
    * This creates a unique on-chain identity that all anchored events
    * are attributed to.
    *
@@ -65,7 +65,7 @@ class CogcoinClientAdapter {
     const identity = await client.identity.register({
       name: SATSGUARD_IDENTITY_NAME,
       metadata: {
-        application: "SatsGuard",
+        application: "BitShield",
         version: "0.1.0",
         description: "AI-powered Bitcoin guardian with quantum defense",
         capabilities: ["policy-enforcement", "quantum-scanning", "transaction-approval"],
@@ -166,7 +166,7 @@ class CogcoinClientAdapter {
 // ─── Public API ─────────────────────────────────────────────────────────────
 
 /**
- * Initializes the Cogcoin client and registers the SatsGuard identity.
+ * Initializes the Cogcoin client and registers the BitShield identity.
  * Must be called once at server startup before anchoring events.
  *
  * @returns The registered Cogcoin identity

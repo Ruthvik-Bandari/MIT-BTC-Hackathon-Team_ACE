@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # ============================================================
-# SatsGuard — Bitcoin Testnet Setup Script
+# BitShield — Bitcoin Testnet Setup Script
 # Run: chmod +x scripts/setup-testnet.sh && ./scripts/setup-testnet.sh
 # ============================================================
 
-echo "=== SatsGuard Testnet Setup ==="
+echo "=== BitShield Testnet Setup ==="
 echo ""
 
 # Colors

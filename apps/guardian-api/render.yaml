@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: satsguard-api
+    name: bitshield-api
     runtime: docker
     dockerfilePath: ./Dockerfile
     dockerContext: .
