@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { payInvoice, getBalance, PayInvoiceSchema } from "../services/alby.js";
-import { broadcast } from "../index.js";
+import { broadcast } from "../utils/broadcast.js";
 import type { ApiResponse, LightningPayment, LightningBalance } from "../utils/types.js";
 
 export const lightningRoutes = new Hono();

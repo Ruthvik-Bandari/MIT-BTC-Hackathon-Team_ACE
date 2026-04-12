@@ -14,7 +14,7 @@ import { webhookRoutes } from "./routes/webhook.js";
 import { errorHandler } from "./middleware/error.js";
 import { securityHeaders, rateLimiter } from "./middleware/security.js";
 import { initCogcoin } from "./services/cogcoin.js";
-import type { WsMessage, WsEventType } from "./utils/types.js";
+import { addClient, removeClient, getClientCount } from "./utils/broadcast.js";
 
 // ── Hono app ─────────────────────────────────────────────────
 
@@ -52,52 +52,31 @@ app.route("/api/webhook", webhookRoutes);
 
 // ── Bun native HTTP + WebSocket server ──────────────────────────
 
-const clients = new Set<ServerWebSocket<unknown>>();
-
 const server = Bun.serve({
   port: PORT,
   fetch(req, server) {
     const url = new URL(req.url);
 
-    // Upgrade WebSocket requests on /ws path
     if (url.pathname === "/ws") {
       const upgraded = server.upgrade(req);
       if (upgraded) return undefined;
       return new Response("WebSocket upgrade failed", { status: 400 });
     }
 
-    // All other requests go through Hono
     return app.fetch(req, server);
   },
   websocket: {
     open(ws) {
-      clients.add(ws);
-      console.log(`[WS] Client connected (${clients.size} total)`);
+      addClient(ws as any);
+      console.log(`[WS] Client connected (${getClientCount()} total)`);
     },
     close(ws) {
-      clients.delete(ws);
-      console.log(`[WS] Client disconnected (${clients.size} total)`);
+      removeClient(ws as any);
+      console.log(`[WS] Client disconnected (${getClientCount()} total)`);
     },
-    message(_ws, _message) {
-      // Clients don't send messages in our protocol — server push only
-    },
+    message(_ws, _message) {},
   },
 });
-
-// Broadcast helper — used by services to push real-time events
-export function broadcast(type: WsEventType, payload: unknown): void {
-  const message: WsMessage = {
-    type,
-    payload,
-    timestamp: new Date().toISOString(),
-  };
-
-  const data = JSON.stringify(message);
-
-  for (const client of clients) {
-    client.send(data);
-  }
-}
 
 // ── Cogcoin init (non-blocking) ────────────────────────────────
 initCogcoin()

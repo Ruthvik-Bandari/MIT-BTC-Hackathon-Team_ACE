@@ -35,14 +35,24 @@ const NUNCHUK_CLI = process.env.NUNCHUK_CLI_PATH ?? "nunchuk";
 const WALLET_ID = "twvucjgm"; // configured wallet
 
 async function execNunchuk(args: string[]): Promise<string> {
-  const proc = Bun.spawn([NUNCHUK_CLI, "--json", ...args], {
-    stdout: "pipe",
-    stderr: "pipe",
-  });
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const execFileAsync = promisify(execFile);
 
-  const stdout = await new Response(proc.stdout).text();
-  const stderr = await new Response(proc.stderr).text();
-  const exitCode = await proc.exited;
+  let stdout: string;
+  let stderr: string;
+  let exitCode: number;
+
+  try {
+    const result = await execFileAsync(NUNCHUK_CLI, ["--json", ...args]);
+    stdout = result.stdout;
+    stderr = result.stderr;
+    exitCode = 0;
+  } catch (e: any) {
+    stdout = e.stdout ?? "";
+    stderr = e.stderr ?? "";
+    exitCode = e.code ?? 1;
+  }
 
   if (exitCode !== 0) {
     const errMsg = stderr.trim() || stdout.trim();

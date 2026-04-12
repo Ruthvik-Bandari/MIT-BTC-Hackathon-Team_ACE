@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { broadcast } from "../index.js";
+import { broadcast } from "../utils/broadcast.js";
 import { anchorGuardianEvent } from "../services/cogcoin.js";
 import type {
   ApiResponse,

@@ -102,7 +102,7 @@ class CogcoinClientAdapter {
       network: this.network,
     });
 
-    const payload = serializeEventPayload(event);
+    const payload = await serializeEventPayload(event);
 
     const result = await client.anchor.create({
       identityId,
@@ -271,12 +271,12 @@ export function getRegisteredIdentity(): CogcoinIdentity | null {
  * @param event - The event to serialize
  * @returns Hex-encoded payload string
  */
-function serializeEventPayload(event: CogcoinAnchorEvent): string {
+async function serializeEventPayload(event: CogcoinAnchorEvent): Promise<string> {
   const compact = {
     t: event.eventType,
     ts: event.timestamp,
     g: event.guardianId,
-    d: hashEventData(event.data),
+    d: await hashEventData(event.data),
   };
 
   return Buffer.from(JSON.stringify(compact)).toString("hex");
@@ -312,15 +312,13 @@ function deserializeEventPayload(hex: string): CogcoinAnchorEvent {
  * @param data - Arbitrary event data to hash
  * @returns Truncated SHA-256 hex string (32 chars)
  */
-function hashEventData(data: Record<string, unknown>): string {
+async function hashEventData(data: Record<string, unknown>): Promise<string> {
   const sorted = JSON.stringify(data, Object.keys(data).sort());
   const encoder = new TextEncoder();
   const bytes = encoder.encode(sorted);
 
-  // Use Bun's built-in crypto for SHA-256
-  const hasher = new Bun.CryptoHasher("sha256");
-  hasher.update(bytes);
-  const hex = hasher.digest("hex");
+  const { createHash } = await import("node:crypto");
+  const hex = createHash("sha256").update(bytes).digest("hex");
 
   // Truncate to 32 hex chars (16 bytes) for OP_RETURN compactness
   return hex.slice(0, 32);

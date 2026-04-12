@@ -13,7 +13,7 @@ import type {
   WalletScanResult,
   NetworkStats,
 } from "../utils/types.js";
-import { broadcast } from "../index.js";
+import { broadcast } from "../utils/broadcast.js";
 
 export const scannerRoutes = new Hono();
 

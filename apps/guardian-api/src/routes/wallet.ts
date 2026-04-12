@@ -13,7 +13,7 @@ import {
   SetPolicySchema,
   SendTransactionSchema,
 } from "../services/nunchuk.js";
-import { broadcast } from "../index.js";
+import { broadcast } from "../utils/broadcast.js";
 import type { ApiResponse, WalletInfo, WalletPolicy, Transaction } from "../utils/types.js";
 
 const WalletIdParam = z.string().min(1).max(64).regex(/^[a-zA-Z0-9_-]+$/);
