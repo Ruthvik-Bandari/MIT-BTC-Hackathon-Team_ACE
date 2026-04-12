@@ -16,7 +16,11 @@ export const payLightningSchema = z.object({
   invoice: z
     .string()
     .min(1, "Lightning invoice is required")
-    .transform((v) => v.trim().replace(/\s+/g, "")),
+    .transform((v) => v.trim().replace(/\s+/g, ""))
+    .refine(
+      (v) => /^ln(bc|tb|tbs|bcrt)/i.test(v),
+      "Invalid invoice — must start with lnbc, lntb, lntbs, or lnbcrt",
+    ),
 });
 
 export type PayLightningInput = z.infer<typeof payLightningSchema>;

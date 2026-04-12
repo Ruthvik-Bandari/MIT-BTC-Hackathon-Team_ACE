@@ -37,12 +37,21 @@ export async function parseIntent(message: string): Promise<GuardianParseResult>
     throw new ClaudeError("ANTHROPIC_API_KEY not configured");
   }
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 512,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: message }],
-  });
+  let response;
+  try {
+    response = await client.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 512,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: "user", content: message }],
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("401") || msg.includes("authentication")) {
+      throw new ClaudeError("Anthropic API key is invalid or expired — check ANTHROPIC_API_KEY in .env");
+    }
+    throw new ClaudeError(`Claude API request failed: ${msg}`);
+  }
 
   const textBlock = response.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") {

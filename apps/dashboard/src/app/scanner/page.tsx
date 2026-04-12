@@ -20,7 +20,6 @@ export default function ScannerPage() {
 
   const { data: singleScan, isLoading: singleLoading } = useScanAddress(
     searchAddress,
-    false
   );
 
   const walletScan = useScanWallet();

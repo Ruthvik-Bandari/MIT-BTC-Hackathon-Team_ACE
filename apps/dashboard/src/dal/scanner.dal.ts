@@ -9,13 +9,14 @@ import type {
 
 export async function scanAddress(
   address: string,
-  spent: boolean
+  spent?: boolean,
 ): Promise<QuantumRiskAssessment> {
+  const params: Record<string, string> = {};
+  if (spent !== undefined) params.spent = String(spent);
+
   const { data } = await xiorInstance.get<
     ApiResponse<{ assessment: QuantumRiskAssessment }>
-  >(`/api/scanner/address/${address}`, {
-    params: { spent: String(spent) },
-  });
+  >(`/api/scanner/address/${address}`, { params });
   return data.data.assessment;
 }
 

@@ -6,6 +6,7 @@ import {
   getNetworkStats,
   ScanWalletSchema,
 } from "../services/scanner.js";
+import { hasBeenSpentFrom } from "../services/mempool.js";
 import type {
   ApiResponse,
   QuantumRiskAssessment,
@@ -34,9 +35,24 @@ scannerRoutes.post(
 );
 
 // GET /api/scanner/address/:addr — single address scan
-scannerRoutes.get("/address/:addr", (c) => {
+// Auto-detects spent status from mempool.space if not explicitly provided
+scannerRoutes.get("/address/:addr", async (c) => {
   const addr = c.req.param("addr");
-  const spent = c.req.query("spent") === "true";
+  const spentParam = c.req.query("spent");
+
+  let spent: boolean;
+  if (spentParam !== undefined) {
+    spent = spentParam === "true";
+  } else {
+    // Auto-detect from blockchain
+    try {
+      spent = await hasBeenSpentFrom(addr);
+    } catch {
+      // Mempool API may fail for invalid/unknown addresses — default to false
+      spent = false;
+    }
+  }
+
   const assessment = scanAddress(addr, spent);
 
   const response: ApiResponse<{ assessment: QuantumRiskAssessment }> = {

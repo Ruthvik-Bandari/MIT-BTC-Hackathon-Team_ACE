@@ -4,9 +4,9 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import * as scannerDal from "@/dal/scanner.dal";
 import type { WalletAddress } from "@/lib/types";
 
-export function useScanAddress(address: string | undefined, spent: boolean) {
+export function useScanAddress(address: string | undefined, spent?: boolean) {
   return useQuery({
-    queryKey: ["scanner", "address", address, spent],
+    queryKey: ["scanner", "address", address],
     queryFn: () => scannerDal.scanAddress(address!, spent),
     enabled: !!address,
     staleTime: 60_000,
