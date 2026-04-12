@@ -120,6 +120,14 @@ Guardian: Found 3 addresses with exposed public keys:
 | Linting | oxlint | 0.16 | 100x faster than ESLint |
 | TypeScript | typescript | 5.8 | Strict mode, zero `any` types |
 
+## Live Demo
+
+| Service | URL |
+|---------|-----|
+| **Frontend (Dashboard)** | https://dashboard-three-sand-20.vercel.app |
+| **Backend (Guardian API)** | https://bitshield-api-production-7357.up.railway.app |
+| **API Health Check** | https://bitshield-api-production-7357.up.railway.app/api/health |
+
 ## Quick Start
 
 ```bash
@@ -405,7 +413,11 @@ bitshield/
 ├── docs/
 │   └── ARCHITECTURE.md                              # System architecture docs
 │
-└── render.yaml                                      # Render deployment (root)
+├── render.yaml                                      # Render deployment (root)
+│
+├── ── DEPLOYMENT ──
+│   Frontend: Vercel (dashboard-three-sand-20.vercel.app)
+│   Backend:  Railway (bitshield-api-production-7357.up.railway.app)
 ```
 
 ## Research & Motivation

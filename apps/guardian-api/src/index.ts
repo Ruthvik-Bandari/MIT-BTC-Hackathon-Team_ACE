@@ -22,7 +22,14 @@ const PORT = parseInt(process.env.PORT ?? "3001", 10);
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
+    origin: (origin) => {
+      const allowed = [
+        process.env.CORS_ORIGIN,
+        "http://localhost:3000",
+        "https://dashboard-three-sand-20.vercel.app",
+      ].filter(Boolean);
+      return allowed.includes(origin) ? origin : allowed[0]!;
+    },
     credentials: true,
   })
 );
