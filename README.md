@@ -448,7 +448,7 @@ bitshield/
 | **Ruthvik Bandari** | Claude AI guardian engine + Cogcoin integration |
 | **Vamsi** | Quantum vulnerability scanner + security |
 | **Bhagya** | Deployment + infrastructure |
-| **Anusha** | Documentation + presentation + QA |
+| **Anusha** | Documentation + manual testing + presentation + QA |
 
 ## License
 
