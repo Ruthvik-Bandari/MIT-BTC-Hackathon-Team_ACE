@@ -28,12 +28,14 @@ export const SendTransactionSchema = z.object({
 });
 
 // ── Nunchuk CLI wrapper ─────────────────────────────────────────
+// Wraps the real `nunchuk` CLI (v0.1.0) which uses subcommand structure:
+//   nunchuk [--json] [--network <net>] <command> <subcommand> [options]
 
-const NUNCHUK_CLI = process.env.NUNCHUK_CLI_PATH ?? "nunchuk-cli";
-const NETWORK = process.env.BITCOIN_NETWORK ?? "signet";
+const NUNCHUK_CLI = process.env.NUNCHUK_CLI_PATH ?? "nunchuk";
+const WALLET_ID = "twvucjgm"; // configured wallet
 
 async function execNunchuk(args: string[]): Promise<string> {
-  const proc = Bun.spawn([NUNCHUK_CLI, "--chain", NETWORK, ...args], {
+  const proc = Bun.spawn([NUNCHUK_CLI, "--json", ...args], {
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -43,7 +45,15 @@ async function execNunchuk(args: string[]): Promise<string> {
   const exitCode = await proc.exited;
 
   if (exitCode !== 0) {
-    throw new NunchukError(`Nunchuk CLI failed: ${stderr.trim()}`, exitCode);
+    const errMsg = stderr.trim() || stdout.trim();
+    // Try to parse JSON error from CLI
+    try {
+      const errJson = JSON.parse(errMsg);
+      throw new NunchukError(errJson.message ?? errJson.error ?? errMsg, exitCode);
+    } catch (e) {
+      if (e instanceof NunchukError) throw e;
+      throw new NunchukError(errMsg || `CLI exited with code ${exitCode}`, exitCode);
+    }
   }
 
   return stdout.trim();
@@ -52,7 +62,7 @@ async function execNunchuk(args: string[]): Promise<string> {
 export class NunchukError extends Error {
   constructor(
     message: string,
-    public exitCode: number
+    public exitCode: number,
   ) {
     super(message);
     this.name = "NunchukError";
@@ -63,26 +73,31 @@ export class NunchukError extends Error {
 
 export async function createWallet(
   name: string,
-  requiredApprovals: number
+  requiredApprovals: number,
 ): Promise<WalletInfo> {
+  // Create a sandbox (draft wallet), then finalize it
   const output = await execNunchuk([
-    "createwallet",
+    "sandbox",
+    "create",
     "--name",
     name,
-    "--n",
+    "--m",
     String(requiredApprovals),
+    "--n",
+    "3",
+    "--address-type",
+    "NATIVE_SEGWIT",
   ]);
 
-  // Parse CLI output into WalletInfo
-  const walletId = extractField(output, "wallet_id");
+  const parsed = JSON.parse(output);
 
   return {
-    id: walletId,
+    id: parsed.sandboxId ?? parsed.id ?? "",
     name,
     balance: 0,
     policy: {
-      dailyLimit: 1_000_000, // default 0.01 BTC in sats
-      perTransactionLimit: 500_000,
+      dailyLimit: 5_000,
+      perTransactionLimit: 5_000,
       requiredApprovals,
       whitelistedAddresses: [],
     },
@@ -91,70 +106,94 @@ export async function createWallet(
 }
 
 export async function getBalance(walletId: string): Promise<number> {
-  const output = await execNunchuk(["getbalance", "--wallet", walletId]);
-  const balance = parseInt(extractField(output, "balance"), 10);
-  return isNaN(balance) ? 0 : balance;
+  const output = await execNunchuk(["wallet", "get", walletId || WALLET_ID]);
+  const parsed = JSON.parse(output);
+
+  // Balance comes as "0.00000000 BTC" string — convert to sats
+  const balanceStr = typeof parsed.balance === "string"
+    ? parsed.balance.replace(/\s*BTC$/, "")
+    : String(parsed.balance ?? "0");
+  const btc = parseFloat(balanceStr);
+  return Math.round(btc * 100_000_000);
 }
 
 export async function getTransactions(
-  walletId: string
+  walletId: string,
 ): Promise<Transaction[]> {
   const output = await execNunchuk([
-    "gettransactions",
+    "tx",
+    "list",
     "--wallet",
-    walletId,
+    walletId || WALLET_ID,
   ]);
 
-  try {
-    const parsed: Array<{
-      txid: string;
-      amount: number;
-      fee: number;
-      to_address: string;
-      status: string;
-      created_at: string;
-      confirmed_at?: string;
-    }> = JSON.parse(output);
-    return parsed.map((tx) => ({
-      id: tx.txid,
-      walletId,
-      amount: tx.amount,
-      fee: tx.fee,
-      toAddress: tx.to_address,
-      status: mapTxStatus(tx.status),
-      createdAt: tx.created_at,
-      confirmedAt: tx.confirmed_at,
-    }));
-  } catch {
-    return [];
-  }
+  const parsed = JSON.parse(output) as {
+    pending: Array<{
+      txId?: string;
+      id?: string;
+      amount?: number;
+      fee?: number;
+      to?: string;
+      status?: string;
+      createdAt?: string;
+    }>;
+    confirmed: Array<{
+      txId?: string;
+      id?: string;
+      amount?: number;
+      fee?: number;
+      to?: string;
+      status?: string;
+      createdAt?: string;
+      confirmedAt?: string;
+    }>;
+  };
+
+  const mapTx = (
+    tx: (typeof parsed.pending)[number],
+    defaultStatus: string,
+  ): Transaction => ({
+    id: tx.txId ?? tx.id ?? "",
+    walletId: walletId || WALLET_ID,
+    amount: tx.amount ?? 0,
+    fee: tx.fee ?? 0,
+    toAddress: tx.to ?? "",
+    status: mapTxStatus(tx.status ?? defaultStatus),
+    createdAt: tx.createdAt ?? new Date().toISOString(),
+  });
+
+  return [
+    ...parsed.pending.map((tx) => mapTx(tx, "pending")),
+    ...parsed.confirmed.map((tx) => mapTx(tx, "executed")),
+  ];
 }
 
 export async function sendTransaction(
   walletId: string,
   toAddress: string,
   amount: number,
-  memo?: string
+  _memo?: string,
 ): Promise<Transaction> {
-  const args = [
-    "send",
+  const output = await execNunchuk([
+    "tx",
+    "create",
     "--wallet",
-    walletId,
+    walletId || WALLET_ID,
     "--to",
     toAddress,
     "--amount",
     String(amount),
-  ];
-  if (memo) args.push("--memo", memo);
+    "--currency",
+    "sat",
+  ]);
 
-  const output = await execNunchuk(args);
-  const txId = extractField(output, "txid");
+  const parsed = JSON.parse(output);
 
   return {
-    id: txId,
-    walletId,
+    id: parsed.txId ?? parsed.id ?? "",
+    walletId: walletId || WALLET_ID,
     amount,
-    fee: 0,
+    fee: parsed.fee ?? 0,
     toAddress,
     status: "pending",
     createdAt: new Date().toISOString(),
@@ -162,27 +201,27 @@ export async function sendTransaction(
 }
 
 export async function approveTransaction(txId: string): Promise<Transaction> {
-  const output = await execNunchuk(["approve", "--txid", txId]);
-  const status = extractField(output, "status");
+  // In nunchuk CLI, signing a transaction is the approval step
+  const output = await execNunchuk(["tx", "sign", "--tx-id", txId]);
+  const parsed = JSON.parse(output);
 
   return {
     id: txId,
-    walletId: "",
-    amount: 0,
-    fee: 0,
-    toAddress: "",
-    status: mapTxStatus(status),
-    createdAt: new Date().toISOString(),
+    walletId: parsed.walletId ?? WALLET_ID,
+    amount: parsed.amount ?? 0,
+    fee: parsed.fee ?? 0,
+    toAddress: parsed.to ?? "",
+    status: "approved",
+    createdAt: parsed.createdAt ?? new Date().toISOString(),
   };
 }
 
 export async function denyTransaction(txId: string): Promise<Transaction> {
-  const output = await execNunchuk(["deny", "--txid", txId]);
-  void output;
-
+  // Nunchuk CLI doesn't have a deny command — we just don't sign it
+  // The transaction stays pending and eventually expires
   return {
     id: txId,
-    walletId: "",
+    walletId: WALLET_ID,
     amount: 0,
     fee: 0,
     toAddress: "",
@@ -193,82 +232,76 @@ export async function denyTransaction(txId: string): Promise<Transaction> {
 
 export async function setPolicy(
   walletId: string,
-  policy: Omit<WalletPolicy, "requiredApprovals">
+  policy: Omit<WalletPolicy, "requiredApprovals">,
 ): Promise<WalletPolicy> {
   await execNunchuk([
-    "setpolicy",
-    "--wallet",
-    walletId,
-    "--daily-limit",
+    "wallet",
+    "platform-key",
+    "update",
+    walletId || WALLET_ID,
+    "--limit-amount",
     String(policy.dailyLimit),
-    "--per-tx-limit",
-    String(policy.perTransactionLimit),
+    "--limit-currency",
+    "sat",
+    "--limit-interval",
+    "DAILY",
+    "--auto-broadcast",
   ]);
 
   return {
     ...policy,
-    requiredApprovals: 2, // preserved from wallet config
+    requiredApprovals: 2,
   };
 }
 
 export async function getAddresses(
-  walletId: string
+  walletId: string,
 ): Promise<WalletAddress[]> {
   const output = await execNunchuk([
-    "getaddresses",
-    "--wallet",
-    walletId,
+    "wallet",
+    "address",
+    "get",
+    walletId || WALLET_ID,
   ]);
 
+  // CLI returns a single address, not a list
   try {
-    const parsed: Array<{
-      address: string;
-      type: string;
-      balance: number;
-      used: boolean;
-    }> = JSON.parse(output);
-    return parsed.map((addr) => ({
-      address: addr.address,
-      type: mapAddressType(addr.type),
-      balance: addr.balance,
-      spent: addr.used,
-    }));
+    const parsed = JSON.parse(output);
+    return [
+      {
+        address: parsed.address ?? "",
+        type: "P2WPKH" as const, // NATIVE_SEGWIT wallet
+        balance: 0,
+        spent: false,
+      },
+    ];
   } catch {
+    // Fallback: parse text output "address: tb1q..."
+    const match = output.match(/address:\s*(\S+)/);
+    if (match) {
+      return [
+        {
+          address: match[1],
+          type: "P2WPKH" as const,
+          balance: 0,
+          spent: false,
+        },
+      ];
+    }
     return [];
   }
 }
 
 // ── Helpers ─────────────────────────────────────────────────────
 
-function extractField(output: string, field: string): string {
-  const regex = new RegExp(`${field}[:\\s]+(.+)`, "i");
-  const match = output.match(regex);
-  return match?.[1]?.trim() ?? "";
-}
-
 function mapTxStatus(
-  status: string
+  status: string,
 ): "pending" | "approved" | "denied" | "executed" | "failed" {
-  const map: Record<
-    string,
-    "pending" | "approved" | "denied" | "executed" | "failed"
-  > = {
-    pending: "pending",
-    approved: "approved",
-    denied: "denied",
-    confirmed: "executed",
-    executed: "executed",
-    failed: "failed",
-  };
-  return map[status.toLowerCase()] ?? "pending";
-}
-
-function mapAddressType(
-  type: string
-): "P2PK" | "P2PKH" | "P2WPKH" | "P2TR" | "P2SH" | "P2WSH" | "UNKNOWN" {
-  const upper = type.toUpperCase();
-  const valid = ["P2PK", "P2PKH", "P2WPKH", "P2TR", "P2SH", "P2WSH"] as const;
-  return (valid as readonly string[]).includes(upper)
-    ? (upper as (typeof valid)[number])
-    : "UNKNOWN";
+  const s = status.toLowerCase();
+  if (s.includes("pending") || s.includes("ready")) return "pending";
+  if (s.includes("signed") || s.includes("approved")) return "approved";
+  if (s.includes("confirmed") || s.includes("broadcast")) return "executed";
+  if (s.includes("failed") || s.includes("error")) return "failed";
+  if (s.includes("denied") || s.includes("rejected")) return "denied";
+  return "pending";
 }
