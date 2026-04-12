@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircle, XCircle } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +80,20 @@ export function PolicyEditor() {
               )}
               Update Policy
             </Button>
+
+            {setPolicy.isSuccess && (
+              <div className="flex items-center gap-2 rounded-lg bg-green-500/10 px-3 py-2 text-sm text-green-400">
+                <CheckCircle className="size-4" />
+                Policy updated successfully
+              </div>
+            )}
+
+            {setPolicy.isError && (
+              <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                <XCircle className="size-4" />
+                {setPolicy.error.message}
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>

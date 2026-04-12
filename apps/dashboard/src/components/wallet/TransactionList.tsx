@@ -71,7 +71,7 @@ function TransactionRow({ tx }: { tx: Transaction }) {
 
 export function TransactionList() {
   const activeWallet = useWalletStore((s) => s.activeWallet);
-  const { data: transactions, isLoading } = useWalletTransactions(activeWallet?.id);
+  const { data: transactions, isLoading, error } = useWalletTransactions(activeWallet?.id);
 
   return (
     <Card>
@@ -86,6 +86,8 @@ export function TransactionList() {
               <div key={i} className="h-12 animate-pulse rounded bg-muted" />
             ))}
           </div>
+        ) : error ? (
+          <p className="text-sm text-muted-foreground py-4">No transactions yet</p>
         ) : !transactions?.length ? (
           <p className="text-sm text-muted-foreground py-4">No transactions yet</p>
         ) : (

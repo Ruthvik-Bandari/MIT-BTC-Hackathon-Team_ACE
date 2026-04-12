@@ -10,7 +10,7 @@ import { SlidingNumber } from "@/components/animate-ui/primitives/texts/sliding-
 
 export function WalletOverview() {
   const activeWallet = useWalletStore((s) => s.activeWallet);
-  const { data, isLoading } = useWalletBalance(activeWallet?.id);
+  const { data, isLoading, error } = useWalletBalance(activeWallet?.id);
 
   if (!activeWallet) {
     return (
@@ -25,7 +25,8 @@ export function WalletOverview() {
     );
   }
 
-  const balance = data?.balance ?? activeWallet.balance;
+  // Use live balance if available, fall back to store data on error
+  const balance = error ? activeWallet.balance : (data?.balance ?? activeWallet.balance);
 
   return (
     <Fade inView inViewOnce>

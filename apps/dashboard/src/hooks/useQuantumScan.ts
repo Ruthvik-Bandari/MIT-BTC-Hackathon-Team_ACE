@@ -10,6 +10,11 @@ export function useScanAddress(address: string | undefined, spent?: boolean) {
     queryFn: () => scannerDal.scanAddress(address!, spent),
     enabled: !!address,
     staleTime: 60_000,
+    retry: (failureCount, error) => {
+      // Don't retry on validation errors (400)
+      if (error.message.includes("Invalid")) return false;
+      return failureCount < 2;
+    },
   });
 }
 
