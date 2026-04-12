@@ -114,7 +114,7 @@ Guardian: Found 3 addresses with exposed public keys:
 | Bitcoin | bitcoinjs-lib | 7.0 | Address decoding + type detection |
 | Lightning | @getalby/sdk | 7.0 | Alby NWC Lightning payments |
 | Blockchain Data | mempool.space API | - | UTXO lookups, spent detection |
-| Anchoring | @cogcoin/client | 0.5 | OP_RETURN on-chain audit trail |
+| Anchoring | cogcoin (npm) | 0.5 | Layer on Bitcoin — OP_RETURN on-chain audit trail |
 | Image Optimization | Sharp | 0.33 | Next.js image processing |
 | Real-time | Bun native WebSocket | - | Live transaction updates |
 | Linting | oxlint | 0.16 | 100x faster than ESLint |
@@ -143,7 +143,7 @@ cp .env.example .env
 # Fill in your API keys:
 #   ANTHROPIC_API_KEY  — Claude AI (required)
 #   ALBY_NWC_URL       — Alby Lightning wallet (required)
-#   COGCOIN_API_KEY    — Cogcoin on-chain anchoring (optional)
+
 
 # Symlink .env into sub-apps so Bun picks it up
 ln -sf ../../.env apps/guardian-api/.env
@@ -165,22 +165,17 @@ bun scripts/test-guardian.ts
 bun scripts/seed-demo.ts
 ```
 
-### Cogcoin Setup (Optional)
+### Cogcoin Setup
 
-BitShield can anchor guardian actions on-chain via Cogcoin OP_RETURN transactions.
+Cogcoin is a layer that runs on top of Bitcoin. BitShield integrates with it via the npm package to anchor guardian actions on-chain via OP_RETURN transactions.
 
 ```bash
-# Install Cogcoin CLI
-cd tools/cogcoin && bun install
+# Install Cogcoin via npm
+npm install cogcoin
 
-# Initialize wallet and repair if needed
+# Create a wallet and link it with the phrase MITGOAT
 npx cogcoin init
-npx cogcoin repair --yes
-
-# Note: if bitcoind fails with "Not enough file descriptors",
-# increase the limit before running:
-ulimit -n 10240
-npx cogcoin repair --yes
+# Wallet linked with phrase: MITGOAT
 ```
 
 ## API Endpoints
@@ -215,11 +210,7 @@ GET  /api/lightning/balance     # Lightning wallet balance
 ```
 
 ### Cogcoin (On-Chain Audit)
-```
-POST /api/cogcoin/anchor        # Anchor guardian event via OP_RETURN
-GET  /api/cogcoin/verify/:txId  # Verify anchored event on-chain
-GET  /api/cogcoin/identity      # BitShield identity info
-```
+Cogcoin is a layer on top of Bitcoin — not a separate API. It is installed via npm and anchors guardian events on-chain via OP_RETURN. The wallet is linked with the phrase **MITGOAT**.
 
 ### Nunchuk Webhook (Real-Time Events)
 ```
