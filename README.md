@@ -54,7 +54,7 @@ Guardian: Found 3 addresses with exposed public keys:
 | **Natural Language Guardian** | Parse commands via Claude AI into structured wallet actions | No crypto jargon — anyone can manage their Bitcoin security |
 | **Bounded-Authority Wallet** | Nunchuk group wallet with AI agent + co-signer + policy enforcement | AI can spend within limits, humans approve large transactions |
 | **Quantum Vulnerability Scanner** | Classify P2PK/P2PKH/P2WPKH/P2TR/P2SH/P2WSH by quantum risk | First tool that tells you which addresses to migrate and why |
-| **Real-Time Streaming** | SSE-powered chat with token-by-token Claude responses | Feels like ChatGPT, but for your Bitcoin wallet |
+| **Real-Time Updates** | Native Bun WebSocket pushing wallet and scanner events to the dashboard | Balance changes and co-sign requests land without a refresh |
 | **Lightning Payments** | Pay invoices via Alby NWC with policy enforcement | Live micropayments within spending limits |
 | **Cogcoin Audit Trail** | Anchor every guardian action on-chain via OP_RETURN | Immutable, verifiable proof of what the AI did and when |
 | **Migration Planner** | Step-by-step instructions to move funds to quantum-safe addresses | Don't just warn — show exactly how to fix it |
@@ -69,7 +69,7 @@ Guardian: Found 3 addresses with exposed public keys:
 │  TanStack Query v5 + Zustand v5 | xior HTTP client           │
 │  Tailwind CSS v4 + shadcn/ui + AnimateUI (Motion 12)         │
 └────────────────────────┬────────────────────────────────────┘
-                         │ REST + SSE + WebSocket
+                         │ REST + WebSocket       
 ┌────────────────────────▼────────────────────────────────────┐
 │               GUARDIAN API (Hono 4 + Bun 1.3)                │
 │                                                              │
@@ -77,7 +77,7 @@ Guardian: Found 3 addresses with exposed public keys:
 │  │ Claude AI    │  │ Nunchuk CLI  │  │ Quantum Scanner   │  │
 │  │ Sonnet 4     │  │ Group wallet │  │ bitcoinjs-lib v7  │  │
 │  │ Intent parse │  │ Policy mgmt  │  │ Risk classify     │  │
-│  │ SSE stream   │  │ Co-signing   │  │ Migration plans   │  │
+│  │ JSON intent  │  │ Co-signing   │  │ Migration plans   │  │
 │  └──────────────┘  └──────────────┘  └───────────────────┘  │
 │                                                              │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────────┐  │
@@ -437,9 +437,30 @@ bitshield/
 |--------|------|
 | **Om Patel** | Full-stack: Backend API + Frontend dashboard |
 | **Ruthvik Bandari** | Claude AI guardian engine + Cogcoin integration |
-| **Vamsi** | Quantum vulnerability scanner + security |
+| **Vamsi** & **Ruthvik Bandari** | Quantum vulnerability scanner + security (joint) |
 | **Bhagya** | Deployment + infrastructure |
 | **Anusha** | Documentation + manual testing + presentation + QA |
+
+## Testing
+
+```bash
+bun test
+```
+
+The quantum scanner carries **29 unit tests across 5 suites**, covering address-type
+classification, the risk matrix, spent-status handling and migration-plan generation.
+
+## Known limitations
+
+This was built in a weekend at MIT Bitcoin Expo 2026. Read the claims with that in mind.
+
+- **Signet/testnet only.** Nothing here has been exercised against mainnet funds.
+- **The guardian is an intent classifier, not an autonomous agent.** It parses a natural-language
+  request into strict JSON and hands it to bounded wallet authority; it does not call tools itself
+  or move funds without co-signer approval.
+- **The BIP-360 readiness assessment is informational**, based on published address-type analysis
+  rather than on any formal audit.
+- Automated coverage outside the quantum scanner is thin.
 
 ## License
 
